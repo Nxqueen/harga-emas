@@ -176,10 +176,10 @@
             color: #aaa; 
             display: flex; 
             align-items: center; 
-            justify-content: center; /* Label diposisikan di tengah mengikuti nominal */
+            justify-content: center; 
             gap: 4px; 
             width: 100%; 
-            padding-right: 45px; /* Ruang aman agar tidak menabrak badge delta pojok kanan */
+            padding-right: 45px; 
         }
         
         .harga-val { 
@@ -193,7 +193,7 @@
         .harga-val.g { color: #1b5e20; }
         .harga-val.r { color: #b71c1c; }
         
-        /* Badge delta di pojok kanan atas kartu */
+        /* Badge delta 1 hari di pojok kanan atas kartu */
         .top-mini-badge {
             position: absolute;
             top: 10px;
@@ -402,7 +402,7 @@
             </div>
         </div>
 
-        <!-- ROW REALTIME: LABEL & NOMINAL DI TENGAH, BADGE DI KANAN ATAS -->
+        <!-- ROW REALTIME: LABEL & NOMINAL DI TENGAH, BADGE 1 HARI DI KANAN ATAS -->
         <div class="row-realtime">
             <!-- Badge Spread Absolut Melayang di Perbatasan Tengah -->
             <div class="spread-absolute-badge">
@@ -568,7 +568,6 @@ function $(id) { return document.getElementById(id); }
 // ── STATE ─────────────────────────────────────
 const src    = 'treasury';
 let hBeli    = 0, hJual = 0;
-let prevBeli = 0, prevJual = 0;
 let posisi   = { aktif:false, entry:0, gram:0, modal:0 };
 let cdSec    = 30;
 let cdTimer  = null;
@@ -626,6 +625,40 @@ function setNotif(txt, ok = true) {
     nb.style.borderBottomColor = ok ? '#c8e6c9' : '#ffcdd2';
 }
 
+// ── HITUNG KENAIKAN / PENURUNAN 1 HARI (DARI KEMARIN) ──
+function getBaseline1Hari(currentBeli, currentJual) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let savedDate = localStorage.getItem('tr_date');
+    let prevBeli  = localStorage.getItem('tr_prev_beli');
+    let prevJual  = localStorage.getItem('tr_prev_jual');
+    let currBeli  = localStorage.getItem('tr_curr_beli');
+    let currJual  = localStorage.getItem('tr_curr_jual');
+
+    if (!savedDate) {
+        localStorage.setItem('tr_date', todayStr);
+        localStorage.setItem('tr_prev_beli', currentBeli);
+        localStorage.setItem('tr_prev_jual', currentJual);
+        return { baseBeli: currentBeli, baseJual: currentJual };
+    }
+
+    if (savedDate !== todayStr) {
+        let newPrevBeli = currBeli ? parseFloat(currBeli) : currentBeli;
+        let newPrevJual = currJual ? parseFloat(currJual) : currentJual;
+        localStorage.setItem('tr_date', todayStr);
+        localStorage.setItem('tr_prev_beli', newPrevBeli);
+        localStorage.setItem('tr_prev_jual', newPrevJual);
+        localStorage.setItem('tr_curr_beli', currentBeli);
+        localStorage.setItem('tr_curr_jual', currentJual);
+        return { baseBeli: newPrevBeli, baseJual: newPrevJual };
+    } else {
+        localStorage.setItem('tr_curr_beli', currentBeli);
+        localStorage.setItem('tr_curr_jual', currentJual);
+        let baseB = prevBeli ? parseFloat(prevBeli) : currentBeli;
+        let baseJ = prevJual ? parseFloat(prevJual) : currentJual;
+        return { baseBeli: baseB, baseJual: baseJ };
+    }
+}
+
 // ── AMBIL HARGA ───────────────────────────────
 async function ambilHarga() {
     try {
@@ -638,29 +671,28 @@ async function ambilHarga() {
         const e    = pool.find(d => /antam|tahun/i.test(d.materialType || ''))
                      || pool[0] || j.data[0];
 
-        prevBeli = hBeli; prevJual = hJual;
         hBeli = e.sellPrice    || 0;
         hJual = e.buybackPrice || 0;
         if (!hBeli && !hJual) throw new Error('Harga tidak tersedia');
 
-        const ts       = new Date().toLocaleTimeString('id-ID');
-        const spread   = hBeli - hJual;
+        const ts        = new Date().toLocaleTimeString('id-ID');
+        const spread    = hBeli - hJual;
         const spreadPct = hBeli > 0 ? (spread / hBeli * 100) : 0;
-        const dB       = prevBeli > 0 ? hBeli - prevBeli : 0;
-        const dJ       = prevJual > 0 ? hJual - prevJual : 0;
+
+        // Hitung kenaikan / penurunan 1 hari dari harga kemarin
+        const { baseBeli, baseJual } = getBaseline1Hari(hBeli, hJual);
+        const diffBeli = hBeli - baseBeli;
+        const diffJual = hJual - baseJual;
 
         setNotif(`Treasury · ANTAM 1g · ${ts}`, true);
         $('harga-beli').innerText = fmtRp(hBeli);
         $('harga-jual').innerText = fmtRp(hJual);
 
-        if (dB !== 0) {
-            $('mini-beli').innerText  = `${dB>0?'↗':'↘'} ${fmtRp(Math.abs(dB))}`;
-            $('mini-beli').className  = 'top-mini-badge ' + (dB>0?'g':'r');
-        }
-        if (dJ !== 0) {
-            $('mini-jual').innerText  = `${dJ>0?'↗':'↘'} ${fmtRp(Math.abs(dJ))}`;
-            $('mini-jual').className  = 'top-mini-badge ' + (dJ>0?'g':'r');
-        }
+        $('mini-beli').innerText  = `${diffBeli >= 0 ? '↗' : '↘'} ${fmtRp(Math.abs(diffBeli))}`;
+        $('mini-beli').className  = 'top-mini-badge ' + (diffBeli >= 0 ? 'g' : 'r');
+
+        $('mini-jual').innerText  = `${diffJual >= 0 ? '↗' : '↘'} ${fmtRp(Math.abs(diffJual))}`;
+        $('mini-jual').className  = 'top-mini-badge ' + (diffJual >= 0 ? 'g' : 'r');
 
         $('pct-bdg').innerText  = `-${spreadPct.toFixed(2)} %`;
         $('last-upd').innerText = ts;
