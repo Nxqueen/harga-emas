@@ -148,7 +148,7 @@
         .refresh-btn.spin { animation: doSpin .6s linear; }
         @keyframes doSpin { to { transform: rotate(360deg); } }
 
-        /* ── ROW REALTIME: 2 KARTU RAPAT & BADGE MELAYANG DI TENGAH ── */
+        /* ── ROW REALTIME: 2 KARTU RAPAT & SEMUA ELEMEN DI TENGAH ── */
         .row-realtime {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -177,7 +177,7 @@
             align-items: center; 
             gap: 4px; 
             width: 100%; 
-            justify-content: flex-start; 
+            justify-content: center; /* Diubah jadi center agar sejajar dengan nominal */
         }
         
         .harga-val { 
@@ -194,13 +194,14 @@
         .delta-badge {
             display: inline-flex; align-items: center; gap: 3px;
             font-size: 10px; font-weight: 700;
-            padding: 2px 6px; border-radius: 6px; width: fit-content; margin-top: 2px;
+            padding: 2px 6px; border-radius: 6px; width: fit-content; 
+            margin: 2px auto 0 auto; /* Centered using auto margins */
         }
         @media (min-width: 600px) { .delta-badge { font-size: 11px; padding: 2px 7px; } }
         .delta-badge.g { background: #e8f5e9; color: #2e7d32; }
         .delta-badge.r { background: #ffebee; color: #c62828; }
 
-        /* Badge Spread Absolut Melayang di Perbatasan Tengah Tanpa Menggeser Teks */
+        /* Badge Spread Absolut Melayang di Perbatasan Tengah */
         .spread-absolute-badge {
             position: absolute;
             top: 50%;
@@ -392,7 +393,7 @@
             </div>
         </div>
 
-        <!-- ROW REALTIME: 2 KARTU RAPAT & BADGE MELAYANG DI TENGAH PERBATASAN -->
+        <!-- ROW REALTIME: 2 KARTU RAPAT & SEMUA ELEMEN TENGAH -->
         <div class="row-realtime">
             <!-- Badge Spread Absolut Melayang di Perbatasan Tengah -->
             <div class="spread-absolute-badge">
