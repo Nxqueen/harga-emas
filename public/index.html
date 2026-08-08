@@ -65,30 +65,58 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.07);
         }
 
-        /* ── ROW TOP: JAM + UPDATE ── */
+        /* ── ROW TOP: JAM + UPDATE TERAKHIR (RESPONSIF SEIMBANG) ── */
         .row-top {
             display: grid;
-            grid-template-columns: 1fr 1.6fr;
+            grid-template-columns: 1fr 1.4fr;
             gap: 10px;
+        }
+        @media (max-width: 480px) {
+            .row-top {
+                grid-template-columns: 1fr 1.2fr;
+            }
         }
 
         .clock-box { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .clock-val { font-size: 30px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+        .clock-val { font-size: 26px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+        @media (min-width: 600px) { .clock-val { font-size: 30px; } }
         .clock-date { font-size: 10px; color: #999; margin-top: 3px; text-align: center; }
 
-        .update-box { display: flex; flex-direction: column; gap: 5px; }
+        .update-box { display: flex; flex-direction: column; gap: 5px; justify-content: center; }
         .lbl-xs { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
-        .update-row { display: flex; align-items: center; gap: 6px; }
-        .update-time { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; flex: 1; }
+        
+        .update-row { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            gap: 6px; 
+            width: 100%;
+        }
+        .update-time { 
+            font-size: 18px; 
+            font-weight: 800; 
+            font-variant-numeric: tabular-nums; 
+            white-space: nowrap;
+        }
+        @media (min-width: 600px) { .update-time { font-size: 22px; } }
 
-        /* ── COUNTDOWN RING ── */
-        .cd-ring-wrap {
-            position: relative;
-            width: 36px; height: 36px;
+        /* ── COUNTDOWN RING & REFRESH BTN ── */
+        .cd-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
             flex-shrink: 0;
         }
+
+        .cd-ring-wrap {
+            position: relative;
+            width: 32px; height: 32px;
+            flex-shrink: 0;
+        }
+        @media (min-width: 600px) { .cd-ring-wrap { width: 36px; height: 36px; } }
+
         .cd-ring {
-            width: 36px; height: 36px;
+            width: 100%; height: 100%;
             transform: rotate(-90deg);
             display: block;
         }
@@ -104,23 +132,25 @@
         .cd-num {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 10px; font-weight: 800; color: #1565c0;
+            font-size: 9px; font-weight: 800; color: #1565c0;
             font-variant-numeric: tabular-nums;
         }
+        @media (min-width: 600px) { .cd-num { font-size: 10px; } }
         .cd-num.urgent { color: #e53935; }
 
         .refresh-btn {
-            width: 36px; height: 36px; background: #1565c0;
-            border: none; border-radius: 9px; cursor: pointer;
-            color: #fff; font-size: 17px; display: flex;
+            width: 32px; height: 32px; background: #1565c0;
+            border: none; border-radius: 8px; cursor: pointer;
+            color: #fff; font-size: 15px; display: flex;
             align-items: center; justify-content: center;
             flex-shrink: 0; transition: background .2s;
         }
+        @media (min-width: 600px) { .refresh-btn { width: 36px; height: 36px; border-radius: 9px; font-size: 17px; } }
         .refresh-btn:hover { background: #0d47a1; }
         .refresh-btn.spin { animation: doSpin .6s linear; }
         @keyframes doSpin { to { transform: rotate(360deg); } }
 
-        /* ── ROW REALTIME: HARGA BELI & JUAL DENGAN SPREAD PRESISI DI TENGAH ── */
+        /* ── ROW REALTIME: HARGA BELI & JUAL DENGAN PADDING AMAN DARI BADGE SPREAD ── */
         .row-realtime {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -136,21 +166,27 @@
             justify-content: center; 
             position: relative;
         }
+        
+        /* Berikan padding khusus agar nominal tidak tertimpa badge spread */
+        .harga-card.beli { padding-right: 22px; }
+        .harga-card.jual { padding-left: 22px; }
+
         .harga-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
-        .harga-val { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
+        .harga-val { font-size: 18px; font-weight: 800; letter-spacing: -.5px; }
         @media (min-width: 600px) { .harga-val { font-size: 24px; } }
         .harga-val.g { color: #1b5e20; }
         .harga-val.r { color: #b71c1c; }
         
         .delta-badge {
             display: inline-flex; align-items: center; gap: 3px;
-            font-size: 11px; font-weight: 700;
-            padding: 2px 7px; border-radius: 6px; width: fit-content; margin-top: 2px;
+            font-size: 10px; font-weight: 700;
+            padding: 2px 6px; border-radius: 6px; width: fit-content; margin-top: 2px;
         }
+        @media (min-width: 600px) { .delta-badge { font-size: 11px; padding: 2px 7px; } }
         .delta-badge.g { background: #e8f5e9; color: #2e7d32; }
         .delta-badge.r { background: #ffebee; color: #c62828; }
 
-        /* Badge Spread Persis di Tengah Celah Garis Pemisah (Sesuai Panah) */
+        /* Badge Spread Persis di Tengah Celah Garis Pemisah (Aman & Tidak Menutupi Angka) */
         .spread-absolute-badge {
             position: absolute;
             top: 42%;
@@ -162,13 +198,14 @@
             align-items: center;
         }
         .pct-badge { 
-            font-size: 10px; 
+            font-size: 9px; 
             font-weight: 800; 
-            padding: 3px 8px; 
-            border-radius: 10px; 
+            padding: 2px 6px; 
+            border-radius: 8px; 
             white-space: nowrap; 
             box-shadow: 0 1px 4px rgba(0,0,0,0.12);
         }
+        @media (min-width: 600px) { .pct-badge { font-size: 10px; padding: 3px 8px; border-radius: 10px; } }
         .pct-badge.r { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
         .pct-badge.g { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
 
@@ -316,7 +353,7 @@
     <!-- ══════════════ LEFT COL ══════════════ -->
     <div class="left-col">
 
-        <!-- ROW 1: JAM | UPDATE -->
+        <!-- ROW 1: JAM | UPDATE TERAKHIR (RESPONSIF) -->
         <div class="row-top">
             <div class="card clock-box">
                 <div class="clock-val" id="clock">--:--:--</div>
@@ -326,34 +363,36 @@
                 <div class="lbl-xs">🕘 Update Terakhir</div>
                 <div class="update-row">
                     <div class="update-time" id="last-upd">--:--:--</div>
-                    <div class="cd-ring-wrap">
-                        <svg class="cd-ring" viewBox="0 0 36 36">
-                            <circle class="cd-track" cx="18" cy="18" r="14"/>
-                            <circle class="cd-arc" id="cd-arc" cx="18" cy="18" r="14"/>
-                        </svg>
-                        <span class="cd-num" id="cd">30</span>
+                    <div class="cd-actions">
+                        <div class="cd-ring-wrap">
+                            <svg class="cd-ring" viewBox="0 0 36 36">
+                                <circle class="cd-track" cx="18" cy="18" r="14"/>
+                                <circle class="cd-arc" id="cd-arc" cx="18" cy="18" r="14"/>
+                            </svg>
+                            <span class="cd-num" id="cd">30</span>
+                        </div>
+                        <button class="refresh-btn" id="rfbtn" onclick="doRefresh()">↻</button>
                     </div>
-                    <button class="refresh-btn" id="rfbtn" onclick="doRefresh()">↻</button>
                 </div>
             </div>
         </div>
 
-        <!-- ROW REALTIME: HARGA BELI & JUAL DENGAN SPREAD TEPAT DI TENGAH GARIS PEMISAH -->
+        <!-- ROW REALTIME: HARGA BELI & JUAL DENGAN PADDING AMAN & SPREAD DI TENGAH -->
         <div class="row-realtime">
-            <!-- Badge Spread Absolut di Tengah-Tengah Celah Pemisah -->
+            <!-- Badge Spread Absolut di Tengah Celah Pemisah -->
             <div class="spread-absolute-badge">
                 <div class="pct-badge r" id="pct-bdg">-3.29%</div>
             </div>
 
-            <!-- Kartu Harga Beli (Kiri - Tanpa Badge Pojok) -->
-            <div class="card harga-card">
+            <!-- Kartu Harga Beli (Kiri - Padding Kanan Aman) -->
+            <div class="card harga-card beli">
                 <div class="harga-lbl">↗ Harga Beli</div>
                 <div class="harga-val g" id="harga-beli">Memuat...</div>
                 <div class="delta-badge g" id="delta-beli">↗ Rp --</div>
             </div>
 
-            <!-- Kartu Harga Jual (Kanan - Tanpa Badge Pojok) -->
-            <div class="card harga-card">
+            <!-- Kartu Harga Jual (Kanan - Padding Kiri Aman) -->
+            <div class="card harga-card jual">
                 <div class="harga-lbl">↘ Harga Jual</div>
                 <div class="harga-val r" id="harga-jual">Memuat...</div>
                 <div class="delta-badge r" id="delta-jual">↗ Rp --</div>
