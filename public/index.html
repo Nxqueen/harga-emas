@@ -42,17 +42,16 @@
         @media (min-width: 1000px) {
             .page { flex-direction: row; align-items: flex-start; }
             .left-col { flex: 1; min-width: 0; }
-            .right-col { width: 520px; flex-shrink: 0; }
+            .right-col { width: 560px; flex-shrink: 0; } /* Lebar kolom grafik diperbesar */
         }
 
-        /* ── MOBILE: reorder via flex order ── */
         .left-col  { display: flex; flex-direction: column; gap: 10px; }
         .right-col { display: flex; flex-direction: column; gap: 10px; }
 
         @media (max-width: 999px) {
-            .right-col { order: -1; }               /* grafik naik ke atas */
-            .row-realtime { order: 1; }             /* harga + kurs */
-            .row-top { order: 2; }                  /* jam + update */
+            .right-col { order: -1; }               
+            .row-realtime { order: 1; }             
+            .row-top { order: 2; }                  
             .row-stats { order: 3; }
             .sim-toggle { order: 4; }
             .row-trading { order: 5; }
@@ -121,7 +120,7 @@
         .refresh-btn.spin { animation: doSpin .6s linear; }
         @keyframes doSpin { to { transform: rotate(360deg); } }
 
-        /* ── ROW REALTIME: wrapper harga + kurs ── */
+        /* ── ROW REALTIME ── */
         .row-realtime {
             display: flex;
             flex-direction: column;
@@ -158,11 +157,19 @@
         .kurs-placeholder-txt  { font-size: 10px; color: #bbb; font-weight: 600; line-height: 1.4; }
         .kurs-placeholder-note { font-size: 9px; color: #ccc; margin-top: 2px; }
 
-        /* ── ROW HARGA ── */
-        .row-harga { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; }
-        @media (max-width: 400px) { .row-harga { grid-template-columns: 1fr 1fr; } .pct-col { display: none; } }
+        /* ── ROW HARGA & SPREAD DI TENGAH ── */
+        .row-harga { 
+            display: grid; 
+            grid-template-columns: 1fr auto 1fr; 
+            gap: 10px; 
+            align-items: center; /* Spread diposisikan tepat di tengah secara vertikal */
+        }
+        @media (max-width: 400px) { 
+            .row-harga { grid-template-columns: 1fr 1fr; } 
+            .pct-col { display: none; } 
+        }
 
-        .harga-card { display: flex; flex-direction: column; gap: 3px; }
+        .harga-card { display: flex; flex-direction: column; gap: 3px; height: 100%; justify-content: center; }
         .harga-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
         .harga-val { font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
         .harga-val.g { color: #1b5e20; }
@@ -174,7 +181,16 @@
         }
         .delta-badge.g { background: #e8f5e9; color: #2e7d32; }
         .delta-badge.r { background: #ffebee; color: #c62828; }
-        .pct-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        
+        /* Kotak Spread di Tengah */
+        .pct-col { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 4px; 
+            height: 100%;
+        }
         .pct-badge { font-size: 12px; font-weight: 800; padding: 4px 9px; border-radius: 8px; }
         .pct-badge.r { background: #ffebee; color: #c62828; }
         .pct-badge.g { background: #e8f5e9; color: #1b5e20; }
@@ -261,13 +277,17 @@
         .pl-bdg.g { background: #e8f5e9; color: #2e7d32; }
         .pl-bdg.r { background: #ffebee; color: #c62828; }
 
-        /* ── GRAFIK ── */
+        /* ── GRAFIK (TINGGI DIPERBESAR & COPYRIGHT DIHAPUS) ── */
         .chart-wrap {
             border-radius: 14px; overflow: hidden;
-            height: 300px;
+            height: 400px; /* Diperbesar untuk mobile */
         }
-        @media (min-width: 1000px) { .chart-wrap { height: 700px; } }
-        @media (min-width: 480px) and (max-width: 999px) { .chart-wrap { height: 360px; } }
+        @media (min-width: 1000px) { 
+            .chart-wrap { height: 820px; } /* Diperbesar sangat panjang untuk PC/Desktop */
+        }
+        @media (min-width: 480px) and (max-width: 999px) { 
+            .chart-wrap { height: 480px; } 
+        }
 
         /* ── LOADING ── */
         .loading-overlay {
@@ -335,7 +355,7 @@
             </div>
         </div>
 
-        <!-- ROW 2: HARGA + KURS MOBILE -->
+        <!-- ROW 2: HARGA + SPREAD DI TENGAH + KURS MOBILE -->
         <div class="row-realtime">
             <div>
                 <div class="row-harga">
@@ -344,6 +364,7 @@
                         <div class="harga-val g" id="harga-beli">Memuat...</div>
                         <div class="delta-badge g" id="delta-beli">↗ Rp --</div>
                     </div>
+                    <!-- SPREAD POSISI DI TENGAH -->
                     <div class="card pct-col">
                         <div class="pct-badge r" id="pct-bdg">-- %</div>
                         <div style="font-size:10px;color:#bbb;margin-top:4px;">spread</div>
@@ -455,17 +476,12 @@
 
     </div><!-- /left-col -->
 
-    <!-- ══════════════ RIGHT COL (GRAFIK) ══════════════ -->
+    <!-- ══════════════ RIGHT COL (GRAFIK DIPERPANJANG & COPYRIGHT DIHAPUS) ══════════════ -->
     <div class="right-col">
-        <div class="chart-wrap">
-            <!-- TradingView Widget BEGIN -->
+        <div class="chart-wrap card" style="padding: 0;">
+            <!-- TradingView Widget BEGIN (Copyright Text Dihapus Total) -->
             <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <div class="tradingview-widget-copyright">
-                    <a href="https://id.tradingview.com/symbols/XAUUSD/?exchange=OANDA" rel="noopener nofollow" target="_blank">
-                        <span class="blue-text">Track all markets on TradingView</span>
-                    </a>
-                </div>
+                <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
                 <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
                 {
                     "allow_symbol_change": true,
