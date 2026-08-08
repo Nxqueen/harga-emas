@@ -300,8 +300,8 @@
                 <div class="src-row">
                     <span class="src-lbl">Sumber:</span>
                     <select class="src-sel" id="src-sel" onchange="gantiSumber(this.value)">
-                        <option value="anekalogam" selected>Aneka Logam (ANTAM)</option>
-                        <option value="treasury">Treasury</option>
+                        <option value="treasury" selected>Treasury</option>
+                        <option value="anekalogam">Aneka Logam (ANTAM)</option>
                         <option value="hargaemas-org">Harga Emas Org</option>
                         <option value="lakuemas">Laku Emas</option>
                         <option value="logammulia">Logam Mulia</option>
@@ -470,7 +470,7 @@ function apiUrl(path) {
     return PROXY + encodeURIComponent(API_BASE + path);
 }
 
-let src = 'anekalogam';
+let src = 'treasury';
 let hBeli = 0, hJual = 0;
 let prevBeli = 0, prevJual = 0;
 let posisi = { aktif:false, entry:0, gram:0, modal:0 };
