@@ -739,8 +739,8 @@ function toggleSim() {
 function eksekusiBeli() {
     if (!hBeli) { alert('Data belum dimuat!'); return; }
     if (posisi.aktif) { alert('Posisi masih aktif! Jual dahulu.'); return; }
-    posisi = { aktif:true, entry:hBeli, gram:10, modal:hBeli*10 };
-    $('gram-beli').innerText      = '10.0000 g';
+    posisi = { aktif:true, entry:hBeli, gram:1, modal:hBeli*1 };
+    $('gram-beli').innerText      = '1 g';
     $('gram-beli-sub').innerText  = fmtRp(posisi.modal);
     $('lbl-modal').innerText      = fmtRpS(posisi.modal);
     $('st-nama').innerText        = 'Simulasi Beli';
