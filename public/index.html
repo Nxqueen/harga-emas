@@ -122,8 +122,6 @@
         @keyframes doSpin { to { transform: rotate(360deg); } }
 
         /* ── ROW REALTIME: wrapper harga + kurs ── */
-        /* Desktop: hanya tampilkan harga (kurs ada di row-top) */
-        /* Mobile: grid 2 kolom harga | kurs */
         .row-realtime {
             display: flex;
             flex-direction: column;
@@ -142,7 +140,6 @@
         @media (min-width: 1000px) {
             .kurs-card-mobile  { display: none !important; }
             .kurs-card-desktop { display: flex; }
-            /* Pada desktop row-top jadi 3 kolom */
             .row-top { grid-template-columns: 1fr 1.6fr 1fr; }
         }
 
@@ -272,8 +269,6 @@
         @media (min-width: 1000px) { .chart-wrap { height: 700px; } }
         @media (min-width: 480px) and (max-width: 999px) { .chart-wrap { height: 360px; } }
 
-
-
         /* ── LOADING ── */
         .loading-overlay {
             position: fixed; inset: 0;
@@ -309,7 +304,7 @@
     <!-- ══════════════ LEFT COL ══════════════ -->
     <div class="left-col">
 
-        <!-- ROW 1: JAM | UPDATE | KURS (desktop: 3 kolom, mobile: kurs disembunyikan) -->
+        <!-- ROW 1: JAM | UPDATE | KURS -->
         <div class="row-top">
             <div class="card clock-box">
                 <div class="clock-val" id="clock">--:--:--</div>
@@ -328,8 +323,8 @@
                     </div>
                     <button class="refresh-btn" id="rfbtn" onclick="doRefresh()">↻</button>
                 </div>
-                            </div>
-            <!-- KURS — Desktop only (mobile ada di row-realtime) -->
+            </div>
+            <!-- KURS — Desktop only -->
             <div class="card kurs-card kurs-card-desktop">
                 <div class="lbl-xs">$ USD / IDR</div>
                 <div class="kurs-placeholder">
@@ -340,9 +335,8 @@
             </div>
         </div>
 
-        <!-- ROW 2: HARGA + KURS MOBILE (mobile: grid 2 kolom) -->
+        <!-- ROW 2: HARGA + KURS MOBILE -->
         <div class="row-realtime">
-            <!-- Harga beli / jual -->
             <div>
                 <div class="row-harga">
                     <div class="card harga-card">
@@ -517,7 +511,7 @@ let posisi   = { aktif:false, entry:0, gram:0, modal:0 };
 let cdSec    = 30;
 let cdTimer  = null;
 const CD_MAX = 30;
-const RING_CIRC = 2 * Math.PI * 14; // 87.96
+const RING_CIRC = 2 * Math.PI * 14;
 
 // ── JAM ───────────────────────────────────────
 const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -578,17 +572,15 @@ async function ambilHarga() {
         const j = await r.json();
         if (!j.success || !j.data?.length) throw new Error('Data kosong');
 
-        // Prioritas: ANTAM 1 gram
         const pool = j.data.filter(d => d.weight === 1);
         const e    = pool.find(d => /antam|tahun/i.test(d.materialType || ''))
                      || pool[0] || j.data[0];
 
         prevBeli = hBeli; prevJual = hJual;
-        hBeli = e.sellPrice    || 0;   // harga beli konsumen
-        hJual = e.buybackPrice || 0;   // harga buyback/jual balik
+        hBeli = e.sellPrice    || 0;
+        hJual = e.buybackPrice || 0;
         if (!hBeli && !hJual) throw new Error('Harga tidak tersedia');
 
-        // Waktu pakai jam lokal device agar sinkron dengan jam realtime
         const ts       = new Date().toLocaleTimeString('id-ID');
         const spread   = hBeli - hJual;
         const spreadPct = hBeli > 0 ? (spread / hBeli * 100) : 0;
