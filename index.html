@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Dashboard Emas Realtime</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100dvh;
+            overflow-x: hidden;
+        }
+
+        /* ── NOTIF BAR ── */
+        .notif-bar {
+            background: #e8f5e9;
+            border-bottom: 1px solid #c8e6c9;
+            padding: 6px 14px;
+            font-size: 12px;
+            color: #2e7d32;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        /* ── SCROLL CONTAINER ── */
+        .page {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ── DESKTOP: side by side ── */
+        @media (min-width: 1000px) {
+            .page { flex-direction: row; align-items: flex-start; }
+            .left-col { flex: 1; min-width: 0; }
+            .right-col { width: 520px; flex-shrink: 0; }
+            .chart-wrap { height: 700px; }
+        }
+        .left-col { display: flex; flex-direction: column; gap: 10px; }
+        .right-col { display: flex; flex-direction: column; gap: 10px; }
+
+        /* ── CARD BASE ── */
+        .card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+        }
+
+        /* ── ROW 1: JAM + UPDATE + KURS ── */
+        .row-top {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 600px) {
+            .row-top { grid-template-columns: 1fr 1fr; }
+            .kurs-card { display: none; }
+        }
+
+        .clock-box { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .clock-val { font-size: 30px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+        .clock-date { font-size: 10px; color: #999; margin-top: 3px; text-align: center; }
+
+        .update-box { display: flex; flex-direction: column; gap: 5px; }
+        .lbl-xs { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
+        .update-row { display: flex; align-items: center; gap: 6px; }
+        .update-time { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .cd-badge {
+            background: #e3f2fd; color: #1565c0;
+            font-size: 12px; font-weight: 700;
+            padding: 2px 7px; border-radius: 7px;
+            min-width: 34px; text-align: center;
+        }
+        .refresh-btn {
+            width: 34px; height: 34px; background: #1565c0;
+            border: none; border-radius: 9px; cursor: pointer;
+            color: #fff; font-size: 17px; display: flex;
+            align-items: center; justify-content: center;
+            flex-shrink: 0; transition: background .2s;
+        }
+        .refresh-btn:hover { background: #0d47a1; }
+        .refresh-btn.spin { animation: doSpin .6s linear; }
+        @keyframes doSpin { to { transform: rotate(360deg); } }
+        .src-row { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+        .src-lbl { font-size: 10px; color: #aaa; white-space: nowrap; }
+        select.src-sel {
+            font-size: 11px; font-weight: 600;
+            border: 1px solid #e0e0e0; border-radius: 7px;
+            padding: 3px 6px; background: #fafafa; color: #1a1a2e;
+            cursor: pointer; flex: 1; min-width: 0;
+        }
+        .kurs-card { display: flex; flex-direction: column; gap: 4px; }
+        .kurs-val { font-size: 19px; font-weight: 800; }
+        .kurs-badge {
+            display: inline-flex; align-items: center; gap: 3px;
+            background: #e8f5e9; color: #2e7d32;
+            font-size: 11px; font-weight: 700;
+            padding: 2px 7px; border-radius: 6px; width: fit-content;
+        }
+
+        /* ── ROW 2: HARGA ── */
+        .row-harga { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; }
+        @media (max-width: 400px) { .row-harga { grid-template-columns: 1fr 1fr; } .pct-col { display: none; } }
+        .harga-card { display: flex; flex-direction: column; gap: 3px; }
+        .harga-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
+        .harga-val { font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
+        .harga-val.g { color: #1b5e20; }
+        .harga-val.r { color: #b71c1c; }
+        .delta-badge {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: 11px; font-weight: 700;
+            padding: 2px 7px; border-radius: 6px; width: fit-content; margin-top: 2px;
+        }
+        .delta-badge.g { background: #e8f5e9; color: #2e7d32; }
+        .delta-badge.r { background: #ffebee; color: #c62828; }
+        .pct-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .pct-badge {
+            font-size: 12px; font-weight: 800;
+            padding: 4px 9px; border-radius: 8px;
+        }
+        .pct-badge.r { background: #ffebee; color: #c62828; }
+        .pct-badge.g { background: #e8f5e9; color: #1b5e20; }
+
+        /* ── ROW 3: STATS GRID ── */
+        .row-stats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+        @media (max-width: 600px) { .row-stats { grid-template-columns: 1fr 1fr; } }
+        .stat-c { background: #fff; border-radius: 11px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+        .stat-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+        .stat-val { font-size: 15px; font-weight: 700; }
+        .stat-val.g { color: #1b5e20; }
+        .stat-val.r { color: #c62828; }
+        .stat-sub { font-size: 10px; color: #bbb; margin-top: 2px; }
+        .off-bdg { background: #f5f5f5; color: #999; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; }
+        .limit-r { display: flex; justify-content: space-between; font-size: 10px; color: #bbb; margin-top: 2px; }
+
+        /* ── TOMBOL SIM ── */
+        .sim-toggle {
+            background: #fff; border: 1.5px solid #e0e0e0; border-radius: 11px;
+            padding: 11px 14px; cursor: pointer; font-size: 13px; font-weight: 600;
+            color: #444; display: flex; align-items: center; justify-content: center;
+            gap: 7px; width: 100%; transition: background .2s;
+        }
+        .sim-toggle:hover { background: #f5f5f5; }
+        .sim-toggle .arr { font-size: 15px; color: #1565c0; }
+
+        /* ── ROW TRADING ── */
+        .row-trading { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; align-items: start; }
+        @media (max-width: 600px) { .row-trading { grid-template-columns: 1fr; } }
+        .tandai-card { display: flex; flex-direction: column; gap: 10px; }
+        .tandai-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-beli {
+            padding: 13px 0; background: #e8f5e9; color: #1b5e20;
+            border: 1.5px solid #a5d6a7; border-radius: 11px;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-beli:hover { background: #c8e6c9; }
+        .btn-jual {
+            padding: 13px 0; background: #ffebee; color: #c62828;
+            border: 2px solid #ef9a9a; border-radius: 11px;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-jual:hover { background: #ffcdd2; }
+        .status-box {
+            background: #fafafa; border: 1px solid #eee;
+            border-radius: 11px; padding: 10px 12px;
+        }
+        .status-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .st-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
+        .st-val { font-size: 15px; font-weight: 800; margin-top: 3px; }
+        .st-val.r { color: #c62828; }
+        .st-val.g { color: #1b5e20; }
+        .st-delta { font-size: 11px; font-weight: 600; }
+        .st-delta.g { color: #2e7d32; }
+        .st-delta.r { color: #c62828; }
+        .st-right { text-align: right; }
+        .st-right-lbl { font-size: 10px; color: #aaa; }
+        .st-right-val { font-size: 13px; font-weight: 700; margin-top: 3px; }
+        .st-upd { font-size: 10px; color: #bbb; margin-top: 5px; }
+
+        /* ── HASIL SIM ── */
+        .hasil-card { display: flex; flex-direction: column; gap: 8px; }
+        .hasil-hdr { display: flex; align-items: center; justify-content: space-between; }
+        .hasil-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
+        .hasil-acts { display: flex; gap: 5px; }
+        .hasil-btn {
+            width: 26px; height: 26px; border-radius: 7px;
+            border: 1px solid #e0e0e0; background: #fafafa;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 13px; color: #666;
+        }
+        .hasil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .hasil-box { background: #fafafa; border: 1px solid #f0f0f0; border-radius: 9px; padding: 10px 12px; }
+        .hb-lbl { font-size: 10px; color: #aaa; margin-bottom: 4px; }
+        .hb-val { font-size: 15px; font-weight: 700; }
+        .hb-val.g { color: #1b5e20; }
+        .hb-val.r { color: #c62828; }
+        .pl-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .pl-bdg {
+            font-size: 11px; font-weight: 700;
+            padding: 2px 7px; border-radius: 6px;
+            display: inline-flex; align-items: center; gap: 3px;
+        }
+        .pl-bdg.g { background: #e8f5e9; color: #2e7d32; }
+        .pl-bdg.r { background: #ffebee; color: #c62828; }
+
+        /* ── GRAFIK ── */
+        .chart-wrap {
+            background: #131722; border-radius: 14px; overflow: hidden;
+            height: 380px;
+            display: flex; flex-direction: column;
+        }
+        @media (min-width: 1000px) { .chart-wrap { height: 700px; } }
+        .chart-hdr {
+            padding: 10px 12px; display: flex; align-items: center;
+            gap: 8px; border-bottom: 1px solid rgba(255,255,255,.07);
+            flex-wrap: wrap; gap: 6px;
+        }
+        .chart-sym { display: flex; align-items: center; gap: 5px; }
+        .chart-sym-name { font-size: 12px; font-weight: 700; color: #d1d4dc; }
+        .tf-btns { display: flex; gap: 3px; flex-wrap: wrap; }
+        .tf-btn {
+            padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 600;
+            cursor: pointer; border: none; background: rgba(255,255,255,.07); color: #888;
+            transition: background .15s, color .15s;
+        }
+        .tf-btn.active, .tf-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
+        .chart-ohlc { font-size: 10px; color: #555; display: flex; gap: 6px; margin-left: auto; }
+        .chart-ohlc span { color: #777; }
+        .chart-ohlc b { color: #d1d4dc; font-weight: 600; }
+        #tvchart { flex: 1; width: 100%; }
+
+        /* ── LOADING ── */
+        .loading-overlay {
+            position: fixed; inset: 0;
+            background: rgba(240,242,245,.96);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 999; gap: 12px;
+        }
+        .loading-spinner {
+            width: 36px; height: 36px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #1565c0;
+            border-radius: 50%;
+            animation: lds .7s linear infinite;
+        }
+        @keyframes lds { to { transform: rotate(360deg); } }
+        .loading-txt { font-size: 13px; color: #888; }
+    </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-txt">Memuat data harga emas...</div>
+</div>
+
+<!-- NOTIF BAR -->
+<div class="notif-bar" id="notif-bar">✅ <span id="notif-txt">Memuat...</span></div>
+
+<div class="page">
+
+    <!-- ══════════════ LEFT COL ══════════════ -->
+    <div class="left-col">
+
+        <!-- ROW 1: JAM | UPDATE | KURS -->
+        <div class="row-top">
+            <div class="card clock-box">
+                <div class="clock-val" id="clock">--:--:--</div>
+                <div class="clock-date" id="clock-date">--</div>
+            </div>
+            <div class="card update-box">
+                <div class="lbl-xs">🕘 Update Terakhir</div>
+                <div class="update-row">
+                    <div class="update-time" id="last-upd">--:--:--</div>
+                    <div class="cd-badge" id="cd">30s</div>
+                    <button class="refresh-btn" id="rfbtn" onclick="doRefresh()">↻</button>
+                </div>
+                <div class="src-row">
+                    <span class="src-lbl">Sumber:</span>
+                    <select class="src-sel" id="src-sel" onchange="gantiSumber(this.value)">
+                        <option value="treasury">Treasury</option>
+                        <option value="anekalogam">Aneka Logam (ANTAM)</option>
+                        <option value="hargaemas-org">Harga Emas Org</option>
+                        <option value="lakuemas">Laku Emas</option>
+                        <option value="logammulia">Logam Mulia</option>
+                        <option value="pegadaian">Pegadaian</option>
+                        <option value="galeri24">Galeri 24</option>
+                        <option value="indogold">Indo Gold</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card kurs-card">
+                <div class="lbl-xs">$ USD/IDR</div>
+                <div class="kurs-val" id="kurs-val">17.993,0</div>
+                <div class="kurs-badge" id="kurs-bdg">↗ 2,0000</div>
+                <div style="font-size:10px;color:#bbb;margin-top:4px;" id="kurs-upd">Updated --</div>
+            </div>
+        </div>
+
+        <!-- ROW 2: HARGA BELI | PCT | HARGA JUAL -->
+        <div class="row-harga">
+            <div class="card harga-card">
+                <div class="harga-lbl">↗ Harga Beli</div>
+                <div class="harga-val g" id="harga-beli">Memuat...</div>
+                <div class="delta-badge g" id="delta-beli">↗ Rp --</div>
+            </div>
+            <div class="card pct-col">
+                <div class="pct-badge r" id="pct-bdg">-- %</div>
+                <div style="font-size:10px;color:#bbb;margin-top:4px;">spread</div>
+            </div>
+            <div class="card harga-card">
+                <div class="harga-lbl">↘ Harga Jual</div>
+                <div class="harga-val r" id="harga-jual">Memuat...</div>
+                <div class="delta-badge r" id="delta-jual">↗ Rp --</div>
+            </div>
+        </div>
+
+        <!-- ROW 3: STATS 4 KOTAK -->
+        <div class="row-stats">
+            <div class="stat-c">
+                <div class="stat-lbl">ⓘ Promo &amp; Limit <span class="off-bdg">OFF</span></div>
+                <div class="limit-r"><span>Limit Transaksi:</span><span style="color:#555;font-weight:700;">3</span></div>
+                <div class="limit-r"><span>Harga Promo:</span><span style="color:#555;font-weight:700;">-</span></div>
+            </div>
+            <div class="stat-c">
+                <div class="stat-lbl">↗ Gram Beli <span id="lbl-modal" style="font-size:10px;color:#1565c0;"></span></div>
+                <div class="stat-val g" id="gram-beli">0 g</div>
+                <div class="stat-sub" id="gram-beli-sub">-</div>
+            </div>
+            <div class="stat-c">
+                <div class="stat-lbl">↘ Gram Jual <span id="lbl-jual" style="font-size:10px;color:#e53935;"></span></div>
+                <div class="stat-val r" id="gram-jual">0 g</div>
+                <div class="stat-sub" id="gram-jual-sub">-</div>
+            </div>
+            <div class="stat-c">
+                <div class="stat-lbl">↗ Profit / Rugi</div>
+                <div class="stat-val" id="profit-rugi" style="color:#888;">Rp 0</div>
+                <div class="stat-sub" id="profit-rugi-sub">-</div>
+            </div>
+        </div>
+
+        <!-- TOMBOL SIM -->
+        <button class="sim-toggle" onclick="toggleSim()">
+            <span class="arr">↗</span>
+            <span id="sim-lbl">Simulasi Trading Real-time</span>
+        </button>
+
+        <!-- ROW TRADING -->
+        <div class="row-trading" id="sim-sec">
+            <!-- TANDAI POSISI + STATUS -->
+            <div class="card tandai-card">
+                <div class="tandai-lbl">⚑ Tandai Posisi Trading</div>
+                <div class="btn-row">
+                    <button class="btn-beli" onclick="eksekusiBeli()">↗ Beli</button>
+                    <button class="btn-jual" onclick="eksekusiJual()">↘ Jual</button>
+                </div>
+                <div class="status-box">
+                    <div class="st-lbl">↗ Status Simulasi</div>
+                    <div class="status-row" style="margin-top:4px;">
+                        <div>
+                            <div class="st-val r" id="st-nama">Kosong</div>
+                            <div class="st-delta g" id="st-delta"></div>
+                        </div>
+                        <div class="st-right">
+                            <div class="st-right-lbl">Harga Jual</div>
+                            <div class="st-right-val" id="st-hj">Rp 0</div>
+                        </div>
+                    </div>
+                    <div class="st-upd" id="st-upd">Update terakhir : --</div>
+                </div>
+            </div>
+
+            <!-- HASIL SIMULASI -->
+            <div class="card hasil-card">
+                <div class="hasil-hdr">
+                    <div class="hasil-lbl">⊞ Hasil Simulasi</div>
+                    <div class="hasil-acts">
+                        <button class="hasil-btn">+</button>
+                        <button class="hasil-btn" onclick="resetSim()">🗑</button>
+                    </div>
+                </div>
+                <div class="hasil-grid">
+                    <div class="hasil-box">
+                        <div class="hb-lbl">Gram Jual (<span id="lbl-gj">0jt</span>)</div>
+                        <div class="hb-val r" id="hsl-gj">0 g</div>
+                    </div>
+                    <div class="hasil-box">
+                        <div class="hb-lbl">Gram Sekarang</div>
+                        <div class="hb-val" id="hsl-gs">0 g</div>
+                    </div>
+                    <div class="hasil-box">
+                        <div class="hb-lbl">Selisih Gram</div>
+                        <div class="hb-val g" id="hsl-sg">+0 g</div>
+                    </div>
+                    <div class="hasil-box">
+                        <div class="hb-lbl">Profit / Loss</div>
+                        <div class="pl-row">
+                            <div class="hb-val" id="hsl-pl">Rp 0</div>
+                            <div class="pl-bdg g" id="hsl-plb">↗ Rp 0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /left-col -->
+
+    <!-- ══════════════ RIGHT COL (GRAFIK) ══════════════ -->
+    <div class="right-col">
+        <div class="chart-wrap">
+            <div class="chart-hdr">
+                <div class="chart-sym">
+                    <span>🪙</span>
+                    <span class="chart-sym-name">Emas · <span id="tf-lbl">1D</span> · IDR</span>
+                </div>
+                <div class="tf-btns">
+                    <button class="tf-btn active" onclick="setTF('1D',this)">1D</button>
+                    <button class="tf-btn" onclick="setTF('5H',this)">5H</button>
+                    <button class="tf-btn" onclick="setTF('1M',this)">1Bln</button>
+                    <button class="tf-btn" onclick="setTF('3M',this)">3Bln</button>
+                    <button class="tf-btn" onclick="setTF('6M',this)">6Bln</button>
+                    <button class="tf-btn" onclick="setTF('YTD',this)">YTD</button>
+                    <button class="tf-btn" onclick="setTF('1Y',this)">1Th</button>
+                    <button class="tf-btn" onclick="setTF('ALL',this)">Semua</button>
+                </div>
+                <div class="chart-ohlc" id="ohlc">
+                    <span>O<b id="oo">--</b></span>
+                    <span>H<b id="oh">--</b></span>
+                    <span>L<b id="ol">--</b></span>
+                    <span>C<b id="oc">--</b></span>
+                </div>
+            </div>
+            <div id="tvchart"></div>
+        </div>
+    </div>
+
+</div><!-- /page -->
+
+<script>
+// ─── INIT CHART ───────────────────────────────
+const chartEl = document.getElementById('tvchart');
+const chart = LightweightCharts.createChart(chartEl, {
+    autoSize: true,
+    layout: { background: { type:'solid', color:'#131722' }, textColor:'#d1d4dc' },
+    grid: { vertLines:{ color:'rgba(42,46,57,.5)' }, horzLines:{ color:'rgba(42,46,57,.5)' } },
+    timeScale: { timeVisible:true, secondsVisible:false },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+});
+const cSeries = chart.addCandlestickSeries({
+    upColor:'#26a69a', downColor:'#ef5350',
+    borderVisible:false, wickUpColor:'#26a69a', wickDownColor:'#ef5350'
+});
+chart.subscribeCrosshairMove(p => {
+    if (p && p.seriesData && p.seriesData.size > 0) {
+        const d = p.seriesData.get(cSeries);
+        if (d) {
+            $('oo').innerText = fmtN(d.open);
+            $('oh').innerText = fmtN(d.high);
+            $('ol').innerText = fmtN(d.low);
+            $('oc').innerText = fmtN(d.close);
+        }
+    }
+});
+
+// ─── STATE ────────────────────────────────────
+const API = 'https://logam-mulia-api.iamutaki.workers.dev';
+let src = 'treasury';
+let hBeli = 0, hJual = 0;
+let prevBeli = 0, prevJual = 0;
+let posisi = { aktif:false, entry:0, gram:0, modal:0 };
+let allCandles = [];
+let curTF = '1D';
+let cdSec = 30;
+let cdTimer = null;
+
+// ─── SHORTHAND ────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+// ─── JAM ──────────────────────────────────────
+const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+setInterval(() => {
+    const n = new Date();
+    $('clock').innerText = n.toLocaleTimeString('id-ID');
+    $('clock-date').innerText = `${HARI[n.getDay()]}, ${n.getDate()} ${BLN[n.getMonth()]} ${n.getFullYear()}`;
+}, 1000);
+
+// ─── COUNTDOWN ────────────────────────────────
+function startCD() {
+    clearInterval(cdTimer);
+    cdSec = 30;
+    $('cd').innerText = cdSec + 's';
+    cdTimer = setInterval(() => {
+        cdSec--;
+        $('cd').innerText = cdSec + 's';
+        if (cdSec <= 0) { ambilHarga(src); cdSec = 30; }
+    }, 1000);
+}
+
+async function doRefresh() {
+    const btn = $('rfbtn');
+    btn.classList.add('spin');
+    await ambilHarga(src);
+    setTimeout(() => btn.classList.remove('spin'), 600);
+    startCD();
+}
+
+// ─── AMBIL HARGA ──────────────────────────────
+async function ambilHarga(sumber) {
+    try {
+        const r = await fetch(`${API}/api/prices/${sumber}`);
+        const j = await r.json();
+        if (!j.success || !j.data?.length) throw new Error('empty');
+
+        const data1g = j.data.filter(d => d.weight === 1);
+        const e = data1g.find(d => /antam|tahun/i.test(d.materialType||''))
+                  || data1g[0] || j.data[0];
+
+        prevBeli = hBeli; prevJual = hJual;
+        hBeli = e.sellPrice;
+        hJual = e.buybackPrice;
+
+        const ts = new Date(j.timestamp).toLocaleTimeString('id-ID');
+        const spread = hBeli - hJual;
+        const spreadPct = hBeli > 0 ? (spread / hBeli * 100) : 0;
+        const dB = prevBeli > 0 ? hBeli - prevBeli : 0;
+        const dJ = prevJual > 0 ? hJual - prevJual : 0;
+        const dn = e.displayName || sumber;
+
+        // Notif
+        $('notif-txt').innerText = `Data dari ${dn} (${ts})`;
+
+        // Harga
+        $('harga-beli').innerText = fmtRp(hBeli);
+        $('harga-jual').innerText = fmtRp(hJual);
+
+        // Delta beli
+        if (dB !== 0) {
+            $('delta-beli').innerText = `${dB>0?'↗':'↘'} ${fmtRp(Math.abs(dB))}`;
+            $('delta-beli').className = 'delta-badge ' + (dB>0?'g':'r');
+        }
+        // Delta jual
+        if (dJ !== 0) {
+            $('delta-jual').innerText = `${dJ>0?'↗':'↘'} ${fmtRp(Math.abs(dJ))}`;
+            $('delta-jual').className = 'delta-badge ' + (dJ>0?'g':'r');
+        }
+
+        // Spread pct
+        $('pct-bdg').innerText = `-${spreadPct.toFixed(2)} %`;
+
+        // Update terakhir
+        $('last-upd').innerText = ts.replace(/:/g,'.');
+        $('st-hj').innerText = fmtRp(hJual);
+        $('st-upd').innerText = `Update terakhir : ${ts.replace(/:/g,'.')}`;
+        $('kurs-upd').innerText = `Updated ${e.recordedDate}`;
+
+        if (posisi.aktif) hitungHasil();
+
+    } catch(err) {
+        console.error(err);
+        $('notif-txt').innerText = '❌ Gagal memuat data';
+    }
+}
+
+// ─── AMBIL HISTORY ────────────────────────────
+async function ambilHistory(sumber) {
+    try {
+        const r = await fetch(`${API}/api/prices/${sumber}/history?weight=1&length=100`);
+        const j = await r.json();
+        if (!j.success || !j.data?.length) return;
+
+        let entries = j.data.filter(d => d.weight === 1);
+        if (!entries.length) entries = j.data;
+
+        const byDate = {};
+        entries.forEach(d => {
+            if (!byDate[d.recordedDate]) byDate[d.recordedDate] = d;
+            else if (/antam|tahun/i.test(d.materialType||'')) byDate[d.recordedDate] = d;
+        });
+
+        const sorted = Object.keys(byDate).sort();
+        if (sorted.length < 2) return;
+
+        allCandles = sorted.map((tgl, i) => {
+            const e   = byDate[tgl];
+            const h   = e.sellPrice;
+            const prv = i > 0 ? byDate[sorted[i-1]].sellPrice : h;
+            const t   = Math.floor(new Date(tgl + 'T07:00:00Z').getTime() / 1000);
+            return { time:t, open:prv, high:Math.max(prv,h)*1.0025, low:Math.min(prv,h)*.9975, close:h };
+        });
+
+        applyTF();
+        if (allCandles.length) {
+            const l = allCandles[allCandles.length-1];
+            $('oo').innerText = fmtN(l.open);
+            $('oh').innerText = fmtN(l.high);
+            $('ol').innerText = fmtN(l.low);
+            $('oc').innerText = fmtN(l.close);
+        }
+    } catch(e) { console.error(e); }
+}
+
+function applyTF() {
+    if (!allCandles.length) return;
+    const now = Date.now()/1000;
+    const cut = {
+        '1D': now-86400, '5H': now-18000,
+        '1M': now-30*86400, '3M': now-90*86400,
+        '6M': now-180*86400, '1Y': now-365*86400,
+        'YTD': new Date(new Date().getFullYear(),0,1).getTime()/1000,
+    };
+    let data = curTF === 'ALL' ? allCandles : allCandles.filter(c => c.time >= (cut[curTF]||0));
+    if (!data.length) data = allCandles;
+    cSeries.setData(data);
+    chart.timeScale().fitContent();
+}
+
+function setTF(tf, btn) {
+    curTF = tf;
+    document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    $('tf-lbl').innerText = tf;
+    applyTF();
+}
+
+// ─── TRADING SIM ──────────────────────────────
+let simVisible = true;
+function toggleSim() {
+    simVisible = !simVisible;
+    $('sim-sec').style.display = simVisible ? 'grid' : 'none';
+    $('sim-lbl').innerText = simVisible ? 'Simulasi Trading Real-time' : 'Tampilkan Simulasi';
+}
+
+function eksekusiBeli() {
+    if (!hBeli) { alert('Data belum dimuat!'); return; }
+    if (posisi.aktif) { alert('Posisi masih aktif! Jual dahulu.'); return; }
+    posisi = { aktif:true, entry:hBeli, gram:10, modal:hBeli*10 };
+    $('gram-beli').innerText = '10.0000 g';
+    $('gram-beli-sub').innerText = fmtRp(posisi.modal);
+    $('lbl-modal').innerText = fmtRpS(posisi.modal);
+    $('st-nama').innerText = 'Simulasi Beli';
+    $('st-nama').className = 'st-val g';
+    $('st-delta').innerText = '';
+    hitungHasil();
+}
+
+function eksekusiJual() {
+    if (!posisi.aktif) { alert('Belum ada posisi!'); return; }
+    const profit = (hJual - posisi.entry) * posisi.gram;
+    const s = profit >= 0 ? '+' : '';
+    $('st-nama').innerText = 'Simulasi Jual';
+    $('st-nama').className = 'st-val r';
+    $('st-delta').innerText = `(${s}${fmtRp(profit)})`;
+    $('st-delta').className = 'st-delta ' + (profit>=0?'g':'r');
+    hitungHasil();
+    posisi.aktif = false;
+}
+
+function hitungHasil() {
+    const gramSkrg = posisi.modal / hJual;
+    const selisih  = gramSkrg - posisi.gram;
+    const profit   = (hJual - posisi.entry) * posisi.gram;
+    const isP      = profit >= 0;
+
+    $('lbl-gj').innerText = fmtRpS(posisi.modal);
+    $('hsl-gj').innerText = gramSkrg.toFixed(4) + ' g';
+    $('hsl-gs').innerText = posisi.gram.toFixed(4) + ' g';
+    $('hsl-sg').innerText = (selisih>=0?'+':'') + selisih.toFixed(4) + ' g';
+    $('hsl-sg').className = 'hb-val ' + (selisih>=0?'g':'r');
+    $('hsl-pl').innerText = fmtRp(profit);
+    $('hsl-pl').className = 'hb-val ' + (isP?'g':'r');
+    $('hsl-plb').innerText = (isP?'↗ ':'↘ ') + fmtRp(Math.abs(profit));
+    $('hsl-plb').className = 'pl-bdg ' + (isP?'g':'r');
+    $('profit-rugi').innerText = fmtRp(profit);
+    $('profit-rugi').className = 'stat-val ' + (isP?'g':'r');
+    $('gram-jual').innerText = gramSkrg.toFixed(4) + ' g';
+    $('gram-jual-sub').innerText = fmtRp(posisi.modal);
+    $('lbl-jual').innerText = fmtRpS(posisi.modal);
+}
+
+function resetSim() {
+    posisi = { aktif:false, entry:0, gram:0, modal:0 };
+    ['gram-beli','gram-jual'].forEach(id => { $(id).innerText='0 g'; });
+    ['gram-beli-sub','gram-jual-sub'].forEach(id => { $(id).innerText='-'; });
+    ['lbl-modal','lbl-jual','lbl-gj'].forEach(id => { $(id).innerText=''; });
+    $('profit-rugi').innerText='Rp 0'; $('profit-rugi').style.color='#888';
+    $('hsl-gj').innerText='0 g'; $('hsl-gs').innerText='0 g';
+    $('hsl-sg').innerText='+0 g'; $('hsl-sg').className='hb-val g';
+    $('hsl-pl').innerText='Rp 0'; $('hsl-pl').className='hb-val';
+    $('hsl-plb').innerText='↗ Rp 0'; $('hsl-plb').className='pl-bdg g';
+    $('st-nama').innerText='Kosong'; $('st-nama').className='st-val r';
+    $('st-delta').innerText='';
+    $('lbl-gj').innerText='0jt';
+}
+
+async function gantiSumber(s) {
+    src = s; hBeli = 0; hJual = 0;
+    $('harga-beli').innerText = 'Memuat...';
+    $('harga-jual').innerText = 'Memuat...';
+    await Promise.all([ambilHarga(s), ambilHistory(s)]);
+    startCD();
+}
+
+// ─── FORMAT ──────────────────────────────────
+function fmtRp(n) {
+    return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n);
+}
+function fmtN(n) {
+    return new Intl.NumberFormat('id-ID',{maximumFractionDigits:0}).format(n);
+}
+function fmtRpS(n) {
+    if(n>=1e9) return (n/1e9).toFixed(1)+'M';
+    if(n>=1e6) return (n/1e6).toFixed(0)+'jt';
+    if(n>=1e3) return (n/1e3).toFixed(0)+'rb';
+    return n.toString();
+}
+
+// ─── INIT ────────────────────────────────────
+async function init() {
+    try {
+        await Promise.all([ambilHarga(src), ambilHistory(src)]);
+        startCD();
+    } finally {
+        $('loading-overlay').style.display = 'none';
+    }
+}
+init();
+</script>
+</body>
+</html>
