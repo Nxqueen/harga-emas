@@ -120,13 +120,13 @@
         .refresh-btn.spin { animation: doSpin .6s linear; }
         @keyframes doSpin { to { transform: rotate(360deg); } }
 
-        /* ── ROW REALTIME: HARGA BELI & JUAL BERDAMPINGAN ── */
+        /* ── ROW REALTIME: HARGA BELI & JUAL DENGAN SPREAD PRESISI DI TENGAH ── */
         .row-realtime {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             position: relative;
-            margin-top: 6px;
+            margin-top: 4px;
         }
 
         .harga-card { 
@@ -140,7 +140,7 @@
         .harga-val { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
         @media (min-width: 600px) { .harga-val { font-size: 24px; } }
         .harga-val.g { color: #1b5e20; }
-        .harga-val.r { color: #c62828; }
+        .harga-val.r { color: #b71c1c; }
         
         .delta-badge {
             display: inline-flex; align-items: center; gap: 3px;
@@ -150,12 +150,12 @@
         .delta-badge.g { background: #e8f5e9; color: #2e7d32; }
         .delta-badge.r { background: #ffebee; color: #c62828; }
 
-        /* Posisi Badge Spread Persis di Tengah Garis Pemisah */
+        /* Badge Spread Persis di Tengah Celah Garis Pemisah (Sesuai Panah) */
         .spread-absolute-badge {
             position: absolute;
-            top: -12px;
+            top: 42%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             z-index: 10;
             display: flex;
             flex-direction: column;
@@ -164,26 +164,13 @@
         .pct-badge { 
             font-size: 10px; 
             font-weight: 800; 
-            padding: 2px 8px; 
+            padding: 3px 8px; 
             border-radius: 10px; 
             white-space: nowrap; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
         }
         .pct-badge.r { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
         .pct-badge.g { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-
-        /* Badge kecil di pojok kanan atas kartu harga */
-        .top-mini-badge {
-            position: absolute;
-            top: 10px;
-            right: 12px;
-            font-size: 9px;
-            font-weight: 700;
-            padding: 1px 6px;
-            border-radius: 5px;
-        }
-        .top-mini-badge.g { background: #e8f5e9; color: #2e7d32; }
-        .top-mini-badge.r { background: #ffebee; color: #c62828; }
 
         /* ── KURS CARD ── */
         .kurs-card {
@@ -353,22 +340,20 @@
 
         <!-- ROW REALTIME: HARGA BELI & JUAL DENGAN SPREAD TEPAT DI TENGAH GARIS PEMISAH -->
         <div class="row-realtime">
-            <!-- Badge Spread Melayang di Tengah Garis Pemisah -->
+            <!-- Badge Spread Absolut di Tengah-Tengah Celah Pemisah -->
             <div class="spread-absolute-badge">
                 <div class="pct-badge r" id="pct-bdg">-3.29%</div>
             </div>
 
-            <!-- Kartu Harga Beli (Kiri) -->
+            <!-- Kartu Harga Beli (Kiri - Tanpa Badge Pojok) -->
             <div class="card harga-card">
-                <div class="top-mini-badge g" id="mini-beli">Rp --</div>
                 <div class="harga-lbl">↗ Harga Beli</div>
                 <div class="harga-val g" id="harga-beli">Memuat...</div>
                 <div class="delta-badge g" id="delta-beli">↗ Rp --</div>
             </div>
 
-            <!-- Kartu Harga Jual (Kanan) -->
+            <!-- Kartu Harga Jual (Kanan - Tanpa Badge Pojok) -->
             <div class="card harga-card">
-                <div class="top-mini-badge r" id="mini-jual">Rp --</div>
                 <div class="harga-lbl">↘ Harga Jual</div>
                 <div class="harga-val r" id="harga-jual">Memuat...</div>
                 <div class="delta-badge r" id="delta-jual">↗ Rp --</div>
@@ -607,14 +592,10 @@ async function ambilHarga() {
         if (dB !== 0) {
             $('delta-beli').innerText = `${dB>0?'↗':'↘'} ${fmtRp(Math.abs(dB))}`;
             $('delta-beli').className = 'delta-badge ' + (dB>0?'g':'r');
-            $('mini-beli').innerText  = `${dB>0?'↗':'↘'} ${fmtRp(Math.abs(dB))}`;
-            $('mini-beli').className  = 'top-mini-badge ' + (dB>0?'g':'r');
         }
         if (dJ !== 0) {
             $('delta-jual').innerText = `${dJ>0?'↗':'↘'} ${fmtRp(Math.abs(dJ))}`;
             $('delta-jual').className = 'delta-badge ' + (dJ>0?'g':'r');
-            $('mini-jual').innerText  = `${dJ>0?'↗':'↘'} ${fmtRp(Math.abs(dJ))}`;
-            $('mini-jual').className  = 'top-mini-badge ' + (dJ>0?'g':'r');
         }
 
         $('pct-bdg').innerText  = `-${spreadPct.toFixed(2)} %`;
