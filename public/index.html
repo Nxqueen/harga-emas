@@ -65,16 +65,14 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.07);
         }
 
-        /* ── ROW TOP: JAM + UPDATE TERAKHIR (RESPONSIF SEIMBANG) ── */
+        /* ── ROW TOP: JAM + UPDATE TERAKHIR ── */
         .row-top {
             display: grid;
             grid-template-columns: 1fr 1.4fr;
             gap: 10px;
         }
         @media (max-width: 480px) {
-            .row-top {
-                grid-template-columns: 1fr 1.2fr;
-            }
+            .row-top { grid-template-columns: 1fr 1.2fr; }
         }
 
         .clock-box { display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -150,30 +148,30 @@
         .refresh-btn.spin { animation: doSpin .6s linear; }
         @keyframes doSpin { to { transform: rotate(360deg); } }
 
-        /* ── ROW REALTIME: HARGA BELI & JUAL DENGAN PADDING AMAN DARI BADGE SPREAD ── */
+        /* ── ROW REALTIME: GRID 3 KOLOM (BELI | SPREAD | JUAL) ── */
         .row-realtime {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            position: relative;
-            margin-top: 4px;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 6px;
+            align-items: center;
         }
 
         .harga-card { 
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
             display: flex; 
             flex-direction: column; 
             gap: 3px; 
             justify-content: center; 
-            position: relative;
+            align-items: center;
+            text-align: center;
+            height: 100%;
         }
-        
-        /* Berikan padding khusus agar nominal tidak tertimpa badge spread */
-        .harga-card.beli { padding-right: 22px; }
-        .harga-card.jual { padding-left: 22px; }
-
-        .harga-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
-        .harga-val { font-size: 18px; font-weight: 800; letter-spacing: -.5px; }
-        @media (min-width: 600px) { .harga-val { font-size: 24px; } }
+        .harga-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; width: 100%; justify-content: flex-start; }
+        .harga-val { font-size: 17px; font-weight: 800; letter-spacing: -.5px; }
+        @media (min-width: 600px) { .harga-val { font-size: 23px; } }
         .harga-val.g { color: #1b5e20; }
         .harga-val.r { color: #b71c1c; }
         
@@ -186,24 +184,21 @@
         .delta-badge.g { background: #e8f5e9; color: #2e7d32; }
         .delta-badge.r { background: #ffebee; color: #c62828; }
 
-        /* Badge Spread Persis di Tengah Celah Garis Pemisah (Aman & Tidak Menutupi Angka) */
-        .spread-absolute-badge {
-            position: absolute;
-            top: 42%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
+        /* Kolom Tengah untuk Spread Badge */
+        .spread-center-col {
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            padding: 0 2px;
         }
         .pct-badge { 
             font-size: 9px; 
             font-weight: 800; 
-            padding: 2px 6px; 
+            padding: 3px 6px; 
             border-radius: 8px; 
             white-space: nowrap; 
-            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         @media (min-width: 600px) { .pct-badge { font-size: 10px; padding: 3px 8px; border-radius: 10px; } }
         .pct-badge.r { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
@@ -353,7 +348,7 @@
     <!-- ══════════════ LEFT COL ══════════════ -->
     <div class="left-col">
 
-        <!-- ROW 1: JAM | UPDATE TERAKHIR (RESPONSIF) -->
+        <!-- ROW 1: JAM | UPDATE TERAKHIR -->
         <div class="row-top">
             <div class="card clock-box">
                 <div class="clock-val" id="clock">--:--:--</div>
@@ -377,22 +372,22 @@
             </div>
         </div>
 
-        <!-- ROW REALTIME: HARGA BELI & JUAL DENGAN PADDING AMAN & SPREAD DI TENGAH -->
+        <!-- ROW REALTIME: GRID 3 KOLOM YANG KONSISTEN & NOMINAL PAS DI TENGAH -->
         <div class="row-realtime">
-            <!-- Badge Spread Absolut di Tengah Celah Pemisah -->
-            <div class="spread-absolute-badge">
-                <div class="pct-badge r" id="pct-bdg">-3.29%</div>
-            </div>
-
-            <!-- Kartu Harga Beli (Kiri - Padding Kanan Aman) -->
-            <div class="card harga-card beli">
+            <!-- Kartu Harga Beli (Kiri) -->
+            <div class="harga-card">
                 <div class="harga-lbl">↗ Harga Beli</div>
                 <div class="harga-val g" id="harga-beli">Memuat...</div>
                 <div class="delta-badge g" id="delta-beli">↗ Rp --</div>
             </div>
 
-            <!-- Kartu Harga Jual (Kanan - Padding Kiri Aman) -->
-            <div class="card harga-card jual">
+            <!-- Kolom Tengah: Badge Spread -->
+            <div class="spread-center-col">
+                <div class="pct-badge r" id="pct-bdg">-3.29%</div>
+            </div>
+
+            <!-- Kartu Harga Jual (Kanan) -->
+            <div class="harga-card">
                 <div class="harga-lbl">↘ Harga Jual</div>
                 <div class="harga-val r" id="harga-jual">Memuat...</div>
                 <div class="delta-badge r" id="delta-jual">↗ Rp --</div>
