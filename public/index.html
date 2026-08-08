@@ -148,7 +148,7 @@
         .refresh-btn.spin { animation: doSpin .6s linear; }
         @keyframes doSpin { to { transform: rotate(360deg); } }
 
-        /* ── ROW REALTIME: 2 KARTU LUAS & TIDAK SEMPIT ── */
+        /* ── ROW REALTIME: 2 KARTU SEIMBANG & ELEMEN DI TENGAH ── */
         .row-realtime {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -176,9 +176,10 @@
             color: #aaa; 
             display: flex; 
             align-items: center; 
+            justify-content: center; /* Label diposisikan di tengah mengikuti nominal */
             gap: 4px; 
             width: 100%; 
-            justify-content: flex-start; 
+            padding-right: 45px; /* Ruang aman agar tidak menabrak badge delta pojok kanan */
         }
         
         .harga-val { 
@@ -192,7 +193,7 @@
         .harga-val.g { color: #1b5e20; }
         .harga-val.r { color: #b71c1c; }
         
-        /* Badge delta di pojok kanan atas kartu secara absolute agar tidak sempit */
+        /* Badge delta di pojok kanan atas kartu */
         .top-mini-badge {
             position: absolute;
             top: 10px;
@@ -209,7 +210,7 @@
         .top-mini-badge.g { background: #e8f5e9; color: #2e7d32; }
         .top-mini-badge.r { background: #ffebee; color: #c62828; }
 
-        /* Badge Spread Absolut Melayang di Perbatasan Tengah Tanpa Tabrakan */
+        /* Badge Spread Absolut Melayang di Perbatasan Tengah */
         .spread-absolute-badge {
             position: absolute;
             top: 50%;
@@ -401,7 +402,7 @@
             </div>
         </div>
 
-        <!-- ROW REALTIME: 2 KARTU LUAS & TIDAK SEMPIT -->
+        <!-- ROW REALTIME: LABEL & NOMINAL DI TENGAH, BADGE DI KANAN ATAS -->
         <div class="row-realtime">
             <!-- Badge Spread Absolut Melayang di Perbatasan Tengah -->
             <div class="spread-absolute-badge">
@@ -521,10 +522,10 @@
 
     </div><!-- /left-col -->
 
-    <!-- ══════════════ RIGHT COL (GRAFIK DIPERPANJANG & COPYRIGHT DIHAPUS) ══════════════ -->
+    <!-- ══════════════ RIGHT COL ══════════════ -->
     <div class="right-col">
         <div class="chart-wrap card" style="padding: 0;">
-            <!-- TradingView Widget BEGIN (Copyright Text Dihapus Total) -->
+            <!-- TradingView Widget BEGIN -->
             <div class="tradingview-widget-container" style="height:100%;width:100%">
                 <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
                 <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
