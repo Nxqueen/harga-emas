@@ -42,7 +42,7 @@
         @media (min-width: 1000px) {
             .page { flex-direction: row; align-items: flex-start; }
             .left-col { flex: 1; min-width: 0; }
-            .right-col { width: 560px; flex-shrink: 0; } /* Lebar kolom grafik diperbesar */
+            .right-col { width: 560px; flex-shrink: 0; }
         }
 
         .left-col  { display: flex; flex-direction: column; gap: 10px; }
@@ -120,26 +120,24 @@
         .refresh-btn.spin { animation: doSpin .6s linear; }
         @keyframes doSpin { to { transform: rotate(360deg); } }
 
-        /* ── ROW REALTIME ── */
+        /* ── ROW REALTIME (LAYOUT SEPERTI GAMBAR 3) ── */
         .row-realtime {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1.5fr;
+            gap: 10px;
+            align-items: stretch;
+        }
+        @media (max-width: 480px) {
+            .row-realtime {
+                grid-template-columns: 1.8fr 1fr 1.5fr;
+            }
+        }
+
+        /* Tumpukan Kiri (Harga Beli & Jual) */
+        .price-stack {
             display: flex;
             flex-direction: column;
             gap: 10px;
-        }
-        @media (max-width: 999px) {
-            .row-realtime {
-                display: grid;
-                grid-template-columns: 3fr 2fr;
-                gap: 10px;
-                align-items: stretch;
-            }
-            .kurs-card-desktop { display: none !important; }
-            .kurs-card-mobile  { display: flex !important; }
-        }
-        @media (min-width: 1000px) {
-            .kurs-card-mobile  { display: none !important; }
-            .kurs-card-desktop { display: flex; }
-            .row-top { grid-template-columns: 1fr 1.6fr 1fr; }
         }
 
         /* ── KURS CARD ── */
@@ -157,21 +155,10 @@
         .kurs-placeholder-txt  { font-size: 10px; color: #bbb; font-weight: 600; line-height: 1.4; }
         .kurs-placeholder-note { font-size: 9px; color: #ccc; margin-top: 2px; }
 
-        /* ── ROW HARGA & SPREAD DI TENGAH ── */
-        .row-harga { 
-            display: grid; 
-            grid-template-columns: 1fr auto 1fr; 
-            gap: 10px; 
-            align-items: center; /* Spread diposisikan tepat di tengah secara vertikal */
-        }
-        @media (max-width: 400px) { 
-            .row-harga { grid-template-columns: 1fr 1fr; } 
-            .pct-col { display: none; } 
-        }
-
-        .harga-card { display: flex; flex-direction: column; gap: 3px; height: 100%; justify-content: center; }
+        .harga-card { display: flex; flex-direction: column; gap: 3px; }
         .harga-lbl { font-size: 10px; color: #aaa; display: flex; align-items: center; gap: 4px; }
-        .harga-val { font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
+        .harga-val { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
+        @media (min-width: 600px) { .harga-val { font-size: 24px; } }
         .harga-val.g { color: #1b5e20; }
         .harga-val.r { color: #b71c1c; }
         .delta-badge {
@@ -280,10 +267,10 @@
         /* ── GRAFIK (TINGGI DIPERBESAR & COPYRIGHT DIHAPUS) ── */
         .chart-wrap {
             border-radius: 14px; overflow: hidden;
-            height: 400px; /* Diperbesar untuk mobile */
+            height: 400px;
         }
         @media (min-width: 1000px) { 
-            .chart-wrap { height: 820px; } /* Diperbesar sangat panjang untuk PC/Desktop */
+            .chart-wrap { height: 820px; } 
         }
         @media (min-width: 480px) and (max-width: 999px) { 
             .chart-wrap { height: 480px; } 
@@ -324,7 +311,43 @@
     <!-- ══════════════ LEFT COL ══════════════ -->
     <div class="left-col">
 
-        <!-- ROW 1: JAM | UPDATE | KURS -->
+        <!-- ROW 1: JAM | UPDATE | KURS (DESKTOP) -->
+        <div class="row-top" style="display:none;"></div> <!-- Placeholder -->
+
+        <!-- ROW REALTIME: HARGA BELI/JUAL STACK | SPREAD | KURS -->
+        <div class="row-realtime">
+            <!-- Kolom Kiri: Beli di atas, Jual di bawah -->
+            <div class="price-stack">
+                <div class="card harga-card">
+                    <div class="harga-lbl">↗ Harga Beli</div>
+                    <div class="harga-val g" id="harga-beli">Memuat...</div>
+                    <div class="delta-badge g" id="delta-beli">↗ Rp --</div>
+                </div>
+                <div class="card harga-card">
+                    <div class="harga-lbl">↘ Harga Jual</div>
+                    <div class="harga-val r" id="harga-jual">Memuat...</div>
+                    <div class="delta-badge r" id="delta-jual">↗ Rp --</div>
+                </div>
+            </div>
+
+            <!-- Kolom Tengah: Spread Badge -->
+            <div class="card pct-col">
+                <div class="pct-badge r" id="pct-bdg">-- %</div>
+                <div style="font-size:10px;color:#bbb;margin-top:4px;">spread</div>
+            </div>
+
+            <!-- Kolom Kanan: USD / IDR -->
+            <div class="card kurs-card">
+                <div class="lbl-xs">$ USD / IDR</div>
+                <div class="kurs-placeholder">
+                    <div class="kurs-placeholder-icon">🚧</div>
+                    <div class="kurs-placeholder-txt">API Kurs<br>Segera Hadir</div>
+                    <div class="kurs-placeholder-note">akan<br>ditambahkan</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW TOP: JAM & UPDATE -->
         <div class="row-top">
             <div class="card clock-box">
                 <div class="clock-val" id="clock">--:--:--</div>
@@ -342,48 +365,6 @@
                         <span class="cd-num" id="cd">30</span>
                     </div>
                     <button class="refresh-btn" id="rfbtn" onclick="doRefresh()">↻</button>
-                </div>
-            </div>
-            <!-- KURS — Desktop only -->
-            <div class="card kurs-card kurs-card-desktop">
-                <div class="lbl-xs">$ USD / IDR</div>
-                <div class="kurs-placeholder">
-                    <div class="kurs-placeholder-icon">🚧</div>
-                    <div class="kurs-placeholder-txt">API Kurs<br>Segera Hadir</div>
-                    <div class="kurs-placeholder-note">akan ditambahkan<br>di sini</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ROW 2: HARGA + SPREAD DI TENGAH + KURS MOBILE -->
-        <div class="row-realtime">
-            <div>
-                <div class="row-harga">
-                    <div class="card harga-card">
-                        <div class="harga-lbl">↗ Harga Beli</div>
-                        <div class="harga-val g" id="harga-beli">Memuat...</div>
-                        <div class="delta-badge g" id="delta-beli">↗ Rp --</div>
-                    </div>
-                    <!-- SPREAD POSISI DI TENGAH -->
-                    <div class="card pct-col">
-                        <div class="pct-badge r" id="pct-bdg">-- %</div>
-                        <div style="font-size:10px;color:#bbb;margin-top:4px;">spread</div>
-                    </div>
-                    <div class="card harga-card">
-                        <div class="harga-lbl">↘ Harga Jual</div>
-                        <div class="harga-val r" id="harga-jual">Memuat...</div>
-                        <div class="delta-badge r" id="delta-jual">↗ Rp --</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KURS — Mobile only -->
-            <div class="card kurs-card kurs-card-mobile" style="display:none;">
-                <div class="lbl-xs">$ USD / IDR</div>
-                <div class="kurs-placeholder">
-                    <div class="kurs-placeholder-icon">🚧</div>
-                    <div class="kurs-placeholder-txt">API Kurs<br>Segera Hadir</div>
-                    <div class="kurs-placeholder-note">akan<br>ditambahkan</div>
                 </div>
             </div>
         </div>
