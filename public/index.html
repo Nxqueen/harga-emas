@@ -61,12 +61,11 @@
         /* ── ROW 1: JAM + UPDATE + KURS ── */
         .row-top {
             display: grid;
-            grid-template-columns: 1fr 1.6fr 1fr;
+            grid-template-columns: 1fr 1.6fr;
             gap: 10px;
         }
         @media (max-width: 600px) {
             .row-top { grid-template-columns: 1fr 1fr; }
-            .kurs-card { display: none; }
         }
 
         .clock-box { display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -108,6 +107,12 @@
             background: #e8f5e9; color: #2e7d32;
             font-size: 11px; font-weight: 700;
             padding: 2px 7px; border-radius: 6px; width: fit-content;
+        }
+        .src-name {
+            font-size: 12px; font-weight: 700;
+            color: #1565c0; background: #e3f2fd;
+            padding: 3px 9px; border-radius: 7px;
+            display: inline-block;
         }
 
         /* ── ROW 2: HARGA ── */
@@ -294,31 +299,10 @@
                 </div>
                 <div class="src-row">
                     <span class="src-lbl">Sumber:</span>
-                    <select class="src-sel" id="src-sel" onchange="gantiSumber(this.value)">
-                        <option value="treasury" selected>Treasury</option>
-                        <option value="anekalogam">Aneka Logam (ANTAM)</option>
-                        <option value="hargaemas-org">Harga Emas Org</option>
-                        <option value="lakuemas">Laku Emas</option>
-                        <option value="logammulia">Logam Mulia</option>
-                        <option value="pegadaian">Pegadaian</option>
-                        <option value="galeri24">Galeri 24</option>
-                        <option value="indogold">Indo Gold</option>
-                        <option value="sakumas">Sakumas</option>
-                        <option value="emasku">Emasku</option>
-                        <option value="bankbsi">Bank BSI</option>
-                        <option value="galeri24">Galeri 24</option>
-                        <option value="sampoernagold">Sampoerna Gold</option>
-                        <option value="brankaslm">Brankas LM</option>
-                        <option value="cermati">Cermati</option>
-                    </select>
+                    <span class="src-name">🏦 Treasury</span>
                 </div>
             </div>
-            <div class="card kurs-card">
-                <div class="lbl-xs">$ USD/IDR</div>
-                <div class="kurs-val" id="kurs-val">17.993,0</div>
-                <div class="kurs-badge" id="kurs-bdg">↗ 2,0000</div>
-                <div style="font-size:10px;color:#bbb;margin-top:4px;" id="kurs-upd">Updated --</div>
-            </div>
+
         </div>
 
         <!-- ROW 2: HARGA BELI | PCT | HARGA JUAL -->
@@ -517,7 +501,7 @@ async function ambilHarga(sumber) {
         hJual = e.buybackPrice || 0;
         if (!hBeli && !hJual) throw new Error('Harga tidak tersedia');
 
-        const ts       = new Date(j.timestamp).toLocaleTimeString('id-ID');
+        const ts       = new Date().toLocaleTimeString('id-ID');
         const spread   = hBeli - hJual;
         const spreadPct = hBeli > 0 ? (spread / hBeli * 100) : 0;
         const dB       = prevBeli > 0 ? hBeli - prevBeli : 0;
@@ -551,31 +535,7 @@ async function ambilHarga(sumber) {
     }
 }
 
-// ── AMBIL KURS ────────────────────────────────
-async function ambilKurs() {
-    try {
-        const r = await fetch('/api/prices/kursdolar');
-        if (!r.ok) return;
-        const j = await r.json();
-        if (!j.success || !j.data?.length) return;
-        const k   = j.data[0];
-        const val = k.sellPrice || k.buybackPrice || 0;
-        if (val > 0) {
-            $('kurs-val').innerText = fmtN(val);
-            $('kurs-upd').innerText = `Updated ${k.recordedDate || ''}`;
-        }
-    } catch(e) { console.warn('kurs:', e.message); }
-}
 
-// ── GANTI SUMBER ──────────────────────────────
-async function gantiSumber(s) {
-    src = s; hBeli = 0; hJual = 0; prevBeli = 0; prevJual = 0;
-    $('harga-beli').innerText = 'Memuat...';
-    $('harga-jual').innerText = 'Memuat...';
-    setNotif(`Memuat dari ${s}...`, true);
-    await ambilHarga(s);
-    startCD();
-}
 
 // ── TRADING SIM ───────────────────────────────
 let simVisible = true;
@@ -664,9 +624,7 @@ function fmtRpS(n) {
 // ── INIT ──────────────────────────────────────
 async function init() {
     try {
-        $('src-sel').value = src;
         await ambilHarga(src);
-        await ambilKurs();
         startCD();
     } catch(err) {
         console.error('init:', err);
@@ -678,4 +636,4 @@ async function init() {
 init();
 </script>
 </body>
-              </html>
+</html>
