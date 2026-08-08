@@ -148,7 +148,7 @@
         .refresh-btn.spin { animation: doSpin .6s linear; }
         @keyframes doSpin { to { transform: rotate(360deg); } }
 
-        /* ── ROW REALTIME: 2 KARTU RAPAT & SEMUA ELEMEN DI TENGAH ── */
+        /* ── ROW REALTIME: 2 KARTU RAPAT & BADGE DI ATAS ── */
         .row-realtime {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -177,7 +177,7 @@
             align-items: center; 
             gap: 4px; 
             width: 100%; 
-            justify-content: center; /* Diubah jadi center agar sejajar dengan nominal */
+            justify-content: center; 
         }
         
         .harga-val { 
@@ -186,20 +186,27 @@
             letter-spacing: -.5px; 
             width: 100%;
             text-align: center;
+            margin-top: 2px;
         }
         @media (min-width: 600px) { .harga-val { font-size: 23px; } }
         .harga-val.g { color: #1b5e20; }
         .harga-val.r { color: #b71c1c; }
         
-        .delta-badge {
-            display: inline-flex; align-items: center; gap: 3px;
-            font-size: 10px; font-weight: 700;
-            padding: 2px 6px; border-radius: 6px; width: fit-content; 
-            margin: 2px auto 0 auto; /* Centered using auto margins */
+        /* Badge delta dipindah ke pojok kanan atas kartu */
+        .top-mini-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
         }
-        @media (min-width: 600px) { .delta-badge { font-size: 11px; padding: 2px 7px; } }
-        .delta-badge.g { background: #e8f5e9; color: #2e7d32; }
-        .delta-badge.r { background: #ffebee; color: #c62828; }
+        .top-mini-badge.g { background: #e8f5e9; color: #2e7d32; }
+        .top-mini-badge.r { background: #ffebee; color: #c62828; }
 
         /* Badge Spread Absolut Melayang di Perbatasan Tengah */
         .spread-absolute-badge {
@@ -393,7 +400,7 @@
             </div>
         </div>
 
-        <!-- ROW REALTIME: 2 KARTU RAPAT & SEMUA ELEMEN TENGAH -->
+        <!-- ROW REALTIME: 2 KARTU RAPAT & BADGE DELTA DI POJOK KANAN ATAS -->
         <div class="row-realtime">
             <!-- Badge Spread Absolut Melayang di Perbatasan Tengah -->
             <div class="spread-absolute-badge">
@@ -402,16 +409,16 @@
 
             <!-- Kartu Harga Beli -->
             <div class="harga-card">
+                <div class="top-mini-badge g" id="mini-beli">↗ Rp --</div>
                 <div class="harga-lbl">↗ Harga Beli</div>
                 <div class="harga-val g" id="harga-beli">Memuat...</div>
-                <div class="delta-badge g" id="delta-beli">↗ Rp --</div>
             </div>
 
             <!-- Kartu Harga Jual -->
             <div class="harga-card">
+                <div class="top-mini-badge r" id="mini-jual">↗ Rp --</div>
                 <div class="harga-lbl">↘ Harga Jual</div>
                 <div class="harga-val r" id="harga-jual">Memuat...</div>
-                <div class="delta-badge r" id="delta-jual">↗ Rp --</div>
             </div>
         </div>
 
@@ -645,12 +652,12 @@ async function ambilHarga() {
         $('harga-jual').innerText = fmtRp(hJual);
 
         if (dB !== 0) {
-            $('delta-beli').innerText = `${dB>0?'↗':'↘'} ${fmtRp(Math.abs(dB))}`;
-            $('delta-beli').className = 'delta-badge ' + (dB>0?'g':'r');
+            $('mini-beli').innerText  = `${dB>0?'↗':'↘'} ${fmtRp(Math.abs(dB))}`;
+            $('mini-beli').className  = 'top-mini-badge ' + (dB>0?'g':'r');
         }
         if (dJ !== 0) {
-            $('delta-jual').innerText = `${dJ>0?'↗':'↘'} ${fmtRp(Math.abs(dJ))}`;
-            $('delta-jual').className = 'delta-badge ' + (dJ>0?'g':'r');
+            $('mini-jual').innerText  = `${dJ>0?'↗':'↘'} ${fmtRp(Math.abs(dJ))}`;
+            $('mini-jual').className  = 'top-mini-badge ' + (dJ>0?'g':'r');
         }
 
         $('pct-bdg').innerText  = `-${spreadPct.toFixed(2)} %`;
