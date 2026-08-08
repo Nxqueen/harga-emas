@@ -296,14 +296,21 @@
                 <div class="src-row">
                     <span class="src-lbl">Sumber:</span>
                     <select class="src-sel" id="src-sel" onchange="gantiSumber(this.value)">
+                        <option value="anekalogam" selected>Aneka Logam (ANTAM)</option>
                         <option value="treasury">Treasury</option>
-                        <option value="anekalogam">Aneka Logam (ANTAM)</option>
                         <option value="hargaemas-org">Harga Emas Org</option>
                         <option value="lakuemas">Laku Emas</option>
                         <option value="logammulia">Logam Mulia</option>
                         <option value="pegadaian">Pegadaian</option>
                         <option value="galeri24">Galeri 24</option>
                         <option value="indogold">Indo Gold</option>
+                        <option value="sakumas">Sakumas</option>
+                        <option value="emasku">Emasku</option>
+                        <option value="bankbsi">Bank BSI</option>
+                        <option value="hartadinataabadi">Hartadinata Abadi</option>
+                        <option value="sampoernagold">Sampoerna Gold</option>
+                        <option value="brankaslm">Brankas LM</option>
+                        <option value="cermati">Cermati</option>
                     </select>
                 </div>
             </div>
@@ -455,6 +462,20 @@
 </div><!-- /page -->
 
 <script>
+// ─── SHORTHAND (harus didefinisikan PERTAMA) ──
+function $(id) { return document.getElementById(id); }
+
+// ─── STATE ────────────────────────────────────
+const API = 'https://logam-mulia-api.iamutaki.workers.dev';
+let src = 'anekalogam'; // sync dengan dropdown default
+let hBeli = 0, hJual = 0;
+let prevBeli = 0, prevJual = 0;
+let posisi = { aktif:false, entry:0, gram:0, modal:0 };
+let allCandles = [];
+let curTF = '1D';
+let cdSec = 30;
+let cdTimer = null;
+
 // ─── INIT CHART ───────────────────────────────
 const chartEl = document.getElementById('tvchart');
 const chart = LightweightCharts.createChart(chartEl, {
@@ -479,20 +500,6 @@ chart.subscribeCrosshairMove(p => {
         }
     }
 });
-
-// ─── STATE ────────────────────────────────────
-const API = 'https://logam-mulia-api.iamutaki.workers.dev';
-let src = 'treasury';
-let hBeli = 0, hJual = 0;
-let prevBeli = 0, prevJual = 0;
-let posisi = { aktif:false, entry:0, gram:0, modal:0 };
-let allCandles = [];
-let curTF = '1D';
-let cdSec = 30;
-let cdTimer = null;
-
-// ─── SHORTHAND ────────────────────────────────
-function $(id) { return document.getElementById(id); }
 
 // ─── JAM ──────────────────────────────────────
 const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -523,20 +530,42 @@ async function doRefresh() {
     startCD();
 }
 
+// ─── AMBIL KURS USD/IDR ───────────────────────
+async function ambilKurs() {
+    try {
+        const r = await fetch(`${API}/api/prices/kursdolar`);
+        const j = await r.json();
+        if (!j.success || !j.data?.length) return;
+        const k = j.data[0];
+        // sellPrice = harga beli USD (kurs jual bank), buybackPrice = kurs beli bank
+        const kursVal = k.sellPrice || k.buybackPrice || 0;
+        if (kursVal > 0) {
+            $('kurs-val').innerText = fmtN(kursVal);
+            $('kurs-upd').innerText = `Updated ${k.recordedDate || ''}`;
+        }
+    } catch(e) { console.error('kurs error:', e); }
+}
+
 // ─── AMBIL HARGA ──────────────────────────────
 async function ambilHarga(sumber) {
     try {
         const r = await fetch(`${API}/api/prices/${sumber}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const j = await r.json();
-        if (!j.success || !j.data?.length) throw new Error('empty');
+        if (!j.success || !j.data?.length) throw new Error('Data kosong dari API');
 
+        // Prioritas: weight=1, lalu materialType ANTAM, lalu fallback ke data[0]
         const data1g = j.data.filter(d => d.weight === 1);
-        const e = data1g.find(d => /antam|tahun/i.test(d.materialType||''))
-                  || data1g[0] || j.data[0];
+        const pool = data1g.length ? data1g : j.data;
+        const e = pool.find(d => /antam|tahun/i.test(d.materialType||'')) || pool[0];
 
         prevBeli = hBeli; prevJual = hJual;
-        hBeli = e.sellPrice;
-        hJual = e.buybackPrice;
+        // Sesuai API: sellPrice = harga toko jual ke konsumen (Harga Beli)
+        //             buybackPrice = harga toko beli kembali (Harga Jual/Buyback)
+        hBeli = e.sellPrice || 0;
+        hJual = e.buybackPrice || 0;
+
+        if (hBeli === 0 && hJual === 0) throw new Error('Harga tidak tersedia');
 
         const ts = new Date(j.timestamp).toLocaleTimeString('id-ID');
         const spread = hBeli - hJual;
@@ -545,8 +574,12 @@ async function ambilHarga(sumber) {
         const dJ = prevJual > 0 ? hJual - prevJual : 0;
         const dn = e.displayName || sumber;
 
-        // Notif
-        $('notif-txt').innerText = `Data dari ${dn} (${ts})`;
+        // Notif bar — ganti warna jadi hijau saat berhasil
+        $('notif-txt').innerText = `Data dari ${dn} · ${ts}`;
+        const nb = document.getElementById('notif-bar');
+        nb.style.background = '#e8f5e9';
+        nb.style.borderBottomColor = '#c8e6c9';
+        nb.style.color = '#2e7d32';
 
         // Harga
         $('harga-beli').innerText = fmtRp(hBeli);
@@ -570,20 +603,29 @@ async function ambilHarga(sumber) {
         $('last-upd').innerText = ts.replace(/:/g,'.');
         $('st-hj').innerText = fmtRp(hJual);
         $('st-upd').innerText = `Update terakhir : ${ts.replace(/:/g,'.')}`;
-        $('kurs-upd').innerText = `Updated ${e.recordedDate}`;
 
         if (posisi.aktif) hitungHasil();
 
     } catch(err) {
-        console.error(err);
-        $('notif-txt').innerText = '❌ Gagal memuat data';
+        console.error('ambilHarga error:', err);
+        // Tampilkan error di notif bar dengan warna merah
+        $('notif-txt').innerText = `❌ Gagal memuat data: ${err.message}`;
+        const nb = document.getElementById('notif-bar');
+        nb.style.background = '#ffebee';
+        nb.style.borderBottomColor = '#ffcdd2';
+        nb.style.color = '#c62828';
+        // Reset tampilan harga jika gagal load
+        if (hBeli === 0) $('harga-beli').innerText = 'Gagal';
+        if (hJual === 0) $('harga-jual').innerText = 'Gagal';
     }
 }
 
 // ─── AMBIL HISTORY ────────────────────────────
 async function ambilHistory(sumber) {
     try {
+        // Coba ambil dengan filter weight=1 dulu, jika kosong ambil tanpa filter
         const r = await fetch(`${API}/api/prices/${sumber}/history?weight=1&length=100`);
+        if (!r.ok) return;
         const j = await r.json();
         if (!j.success || !j.data?.length) return;
 
@@ -713,8 +755,17 @@ function resetSim() {
 
 async function gantiSumber(s) {
     src = s; hBeli = 0; hJual = 0;
+    prevBeli = 0; prevJual = 0;
     $('harga-beli').innerText = 'Memuat...';
     $('harga-jual').innerText = 'Memuat...';
+    $('notif-txt').innerText = `Memuat data dari ${s}...`;
+    const nb = document.getElementById('notif-bar');
+    nb.style.background = '#e8f5e9';
+    nb.style.borderBottomColor = '#c8e6c9';
+    nb.style.color = '#2e7d32';
+    // Reset chart
+    allCandles = [];
+    try { cSeries.setData([]); } catch(e) {}
     await Promise.all([ambilHarga(s), ambilHistory(s)]);
     startCD();
 }
@@ -736,9 +787,15 @@ function fmtRpS(n) {
 // ─── INIT ────────────────────────────────────
 async function init() {
     try {
-        await Promise.all([ambilHarga(src), ambilHistory(src)]);
+        // Set dropdown ke sumber default
+        $('src-sel').value = src;
+        // Fetch harga, history, dan kurs secara paralel
+        await Promise.all([ambilHarga(src), ambilHistory(src), ambilKurs()]);
         startCD();
+    } catch(err) {
+        console.error('init error:', err);
     } finally {
+        // Pastikan loading overlay selalu hilang meski ada error
         $('loading-overlay').style.display = 'none';
     }
 }
