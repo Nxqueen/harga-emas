@@ -266,19 +266,24 @@
 
         /* ── GRAFIK ── */
         .chart-wrap {
-            background: #131722; border-radius: 14px; overflow: hidden;
+            border-radius: 14px; overflow: hidden;
             height: 300px;
-            display: flex; flex-direction: column;
         }
         @media (min-width: 1000px) { .chart-wrap { height: 700px; } }
         @media (min-width: 480px) and (max-width: 999px) { .chart-wrap { height: 360px; } }
-        .chart-hdr {
-            padding: 10px 12px; display: flex; align-items: center;
-            gap: 8px; border-bottom: 1px solid rgba(255,255,255,.07);
-            flex-wrap: wrap; gap: 6px;
+
+        /* iframely fill container */
+        .chart-wrap .iframely-embed { height: 100%; }
+        .chart-wrap .iframely-responsive {
+            height: 100% !important;
+            padding-bottom: 0 !important;
         }
-        .chart-sym { display: flex; align-items: center; gap: 5px; }
-        .chart-sym-name { font-size: 12px; font-weight: 700; color: #d1d4dc; }
+        .chart-wrap .iframely-responsive > * {
+            width: 100% !important;
+            height: 100% !important;
+            border: none;
+            position: static !important;
+        }
 
         /* ── LOADING ── */
         .loading-overlay {
@@ -471,20 +476,17 @@
     <!-- ══════════════ RIGHT COL (GRAFIK) ══════════════ -->
     <div class="right-col">
         <div class="chart-wrap">
-            <div class="chart-hdr">
-                <div class="chart-sym">
-                    <span>🪙</span>
-                    <span class="chart-sym-name">Emas / IDR — TradingView</span>
+            <div class="iframely-embed">
+                <div class="iframely-responsive" style="height:140px;padding-bottom:0;">
+                    <a href="https://harga-realtime.vercel.app/"
+                       data-iframely-url="https://iframely.net/EkRf5C3C?theme=dark"></a>
                 </div>
             </div>
-            <iframe
-                src="https://s.tradingview.com/widgetembed/?frameElementId=tv-chart&symbol=OANDA%3AXAUIDR&interval=D&hidesidetoolbar=1&hidetoptoolbar=0&symboledit=0&saveimage=0&toolbarbg=131722&theme=dark&style=1&timezone=Asia%2FJakarta&withdateranges=1&locale=id"
-                style="width:100%;flex:1;border:none;display:block;min-height:200px;"
-                allowtransparency="true"
-                frameborder="0">
-            </iframe>
         </div>
     </div>
+
+    <!-- iframely embed script (load sekali di akhir) -->
+    <script async src="https://iframely.net/embed.js"></script>
 
 </div><!-- /page -->
 
@@ -702,4 +704,4 @@ async function init() {
 init();
 </script>
 </body>
-</html>
+    </html>
