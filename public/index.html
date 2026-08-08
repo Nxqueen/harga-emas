@@ -209,6 +209,7 @@
         @media (min-width: 600px) { .top-mini-badge { font-size: 10px; padding: 2px 8px; } }
         .top-mini-badge.g { background: #e8f5e9; color: #2e7d32; }
         .top-mini-badge.r { background: #ffebee; color: #c62828; }
+        .top-mini-badge.n { background: #f5f5f5; color: #666; }
 
         /* Badge Spread Absolut Melayang di Perbatasan Tengah */
         .spread-absolute-badge {
@@ -411,14 +412,14 @@
 
             <!-- Kartu Harga Beli -->
             <div class="harga-card">
-                <div class="top-mini-badge g" id="mini-beli">↗ Rp --</div>
+                <div class="top-mini-badge n" id="mini-beli">Rp 0</div>
                 <div class="harga-lbl">↗ Harga Beli</div>
                 <div class="harga-val g" id="harga-beli">Memuat...</div>
             </div>
 
             <!-- Kartu Harga Jual -->
             <div class="harga-card">
-                <div class="top-mini-badge r" id="mini-jual">↗ Rp --</div>
+                <div class="top-mini-badge n" id="mini-jual">Rp 0</div>
                 <div class="harga-lbl">↘ Harga Jual</div>
                 <div class="harga-val r" id="harga-jual">Memuat...</div>
             </div>
@@ -688,11 +689,29 @@ async function ambilHarga() {
         $('harga-beli').innerText = fmtRp(hBeli);
         $('harga-jual').innerText = fmtRp(hJual);
 
-        $('mini-beli').innerText  = `${diffBeli >= 0 ? '↗' : '↘'} ${fmtRp(Math.abs(diffBeli))}`;
-        $('mini-beli').className  = 'top-mini-badge ' + (diffBeli >= 0 ? 'g' : 'r');
+        // Badge Beli
+        if (diffBeli > 0) {
+            $('mini-beli').innerText = `↗ ${fmtRp(Math.abs(diffBeli))}`;
+            $('mini-beli').className = 'top-mini-badge g';
+        } else if (diffBeli < 0) {
+            $('mini-beli').innerText = `↘ ${fmtRp(Math.abs(diffBeli))}`;
+            $('mini-beli').className = 'top-mini-badge r';
+        } else {
+            $('mini-beli').innerText = `Rp 0`;
+            $('mini-beli').className = 'top-mini-badge n';
+        }
 
-        $('mini-jual').innerText  = `${diffJual >= 0 ? '↗' : '↘'} ${fmtRp(Math.abs(diffJual))}`;
-        $('mini-jual').className  = 'top-mini-badge ' + (diffJual >= 0 ? 'g' : 'r');
+        // Badge Jual
+        if (diffJual > 0) {
+            $('mini-jual').innerText = `↗ ${fmtRp(Math.abs(diffJual))}`;
+            $('mini-jual').className = 'top-mini-badge g';
+        } else if (diffJual < 0) {
+            $('mini-jual').innerText = `↘ ${fmtRp(Math.abs(diffJual))}`;
+            $('mini-jual').className = 'top-mini-badge r';
+        } else {
+            $('mini-jual').innerText = `Rp 0`;
+            $('mini-jual').className = 'top-mini-badge n';
+        }
 
         $('pct-bdg').innerText  = `-${spreadPct.toFixed(2)} %`;
         $('last-upd').innerText = ts;
