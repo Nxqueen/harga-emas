@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Dashboard Emas Realtime</title>
+    
+    <!-- Library Grafik Profesional (Pengganti Iframe TradingView) -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
@@ -263,8 +267,11 @@
 
         /* ── GRAFIK ── */
         .chart-wrap {
+            background: #fff;
             border-radius: 14px; overflow: hidden;
             height: 300px;
+            padding: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
         }
         @media (min-width: 1000px) { .chart-wrap { height: 700px; } }
         @media (min-width: 480px) and (max-width: 999px) { .chart-wrap { height: 360px; } }
@@ -458,42 +465,8 @@
     <!-- ══════════════ RIGHT COL (GRAFIK) ══════════════ -->
     <div class="right-col">
         <div class="chart-wrap">
-            <!-- TradingView Widget BEGIN -->
-            <div class="tradingview-widget-container" style="height:100%;width:100%">
-                <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
-                <div class="tradingview-widget-copyright">
-                    <a href="https://id.tradingview.com/symbols/XAUUSD/?exchange=OANDA" rel="noopener nofollow" target="_blank">
-                        <span class="blue-text">Track all markets on TradingView</span>
-                    </a>
-                </div>
-                <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-                {
-                    "allow_symbol_change": true,
-                    "calendar": false,
-                    "details": false,
-                    "hide_side_toolbar": false,
-                    "hide_top_toolbar": false,
-                    "hide_legend": false,
-                    "hide_volume": false,
-                    "hotlist": false,
-                    "interval": "D",
-                    "locale": "id",
-                    "save_image": true,
-                    "style": "1",
-                    "symbol": "OANDA:XAUUSD",
-                    "theme": "light",
-                    "timezone": "Asia/Jakarta",
-                    "backgroundColor": "#ffffff",
-                    "gridColor": "rgba(46, 46, 46, 0.2)",
-                    "watchlist": [],
-                    "withdateranges": false,
-                    "compareSymbols": [],
-                    "studies": [],
-                    "autosize": true
-                }
-                </script>
-            </div>
-            <!-- TradingView Widget END -->
+            <!-- CANVAS CHART PENGGANTI IFRAME -->
+            <div id="tvchart" style="width: 100%; height: 100%;"></div>
         </div>
     </div>
 
@@ -511,7 +484,32 @@ let posisi   = { aktif:false, entry:0, gram:0, modal:0 };
 let cdSec    = 30;
 let cdTimer  = null;
 const CD_MAX = 30;
-const RING_CIRC = 2 * Math.PI * 14;
+const RING_CIRC = 2 * Math.PI * 14; 
+
+// Tambahan Variabel untuk Grafik 2 Arah
+let chart, candleSeries;
+
+// ── INIT GRAFIK ───────────────────────────────
+function initChart() {
+    chart = LightweightCharts.createChart($('tvchart'), {
+        layout: { background: { type: 'solid', color: '#ffffff' }, textColor: '#333' },
+        grid: { vertLines: { color: '#f0f3fa' }, horzLines: { color: '#f0f3fa' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        timeScale: { timeVisible: true, secondsVisible: true },
+    });
+    
+    candleSeries = chart.addCandlestickSeries({
+        upColor: '#1b5e20', downColor: '#c62828', borderVisible: false,
+        wickUpColor: '#1b5e20', wickDownColor: '#c62828'
+    });
+    
+    // Agar grafik responsif mengikuti ukuran card
+    new ResizeObserver(entries => {
+        if (entries.length === 0 || entries[0].target !== $('tvchart')) return;
+        const newRect = entries[0].contentRect;
+        chart.applyOptions({ height: newRect.height, width: newRect.width });
+    }).observe($('tvchart'));
+}
 
 // ── JAM ───────────────────────────────────────
 const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -564,7 +562,7 @@ function setNotif(txt, ok = true) {
     nb.style.borderBottomColor = ok ? '#c8e6c9' : '#ffcdd2';
 }
 
-// ── AMBIL HARGA ───────────────────────────────
+// ── AMBIL HARGA (SINKRONISASI 2 ARAH) ─────────
 async function ambilHarga() {
     try {
         const r = await fetch(`/api/prices/${src}`);
@@ -577,10 +575,26 @@ async function ambilHarga() {
                      || pool[0] || j.data[0];
 
         prevBeli = hBeli; prevJual = hJual;
-        hBeli = e.sellPrice    || 0;
-        hJual = e.buybackPrice || 0;
+        hBeli = e.sellPrice    || 0;   
+        hJual = e.buybackPrice || 0;   
         if (!hBeli && !hJual) throw new Error('Harga tidak tersedia');
 
+        // ======== DISTRIBUSI ARAH 2: KE GRAFIK KANVAS ========
+        if (candleSeries) {
+            const timeNow = Math.floor(Date.now() / 1000);
+            
+            // Render pergerakan lilin berdasarkan API Treasury
+            candleSeries.update({
+                time: timeNow,
+                open: prevBeli || hBeli,
+                high: Math.max(prevBeli, hBeli) + 500, // Simulasi wick (ekor atas)
+                low: Math.min(prevBeli, hBeli) - 500,  // Simulasi wick (ekor bawah)
+                close: hBeli
+            });
+        }
+        // =====================================================
+
+        // ======== DISTRIBUSI ARAH 1: KE PANEL UI ========
         const ts       = new Date().toLocaleTimeString('id-ID');
         const spread   = hBeli - hJual;
         const spreadPct = hBeli > 0 ? (spread / hBeli * 100) : 0;
@@ -699,6 +713,7 @@ function fmtRpS(n) {
 // ── INIT ──────────────────────────────────────
 async function init() {
     try {
+        initChart(); // Inisialisasi Kanvas Grafik Pertama Kali
         await ambilHarga();
         startCD();
     } catch(err) {
